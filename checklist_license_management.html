@@ -1,0 +1,1214 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>License Management — Checklist v2</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#F4F3EF;--card:#fff;--border:#E2E0D8;--text:#1C1B18;--muted:#6B6A63;
+  --green:#1D9E75;--green-bg:#E1F5EE;--green-dk:#0F6E56;
+  --blue:#2B7DE9;--blue-bg:#E6F1FB;--blue-dk:#185FA5;
+  --amber:#D97706;--amber-bg:#FEF3C7;--amber-dk:#854F0B;
+  --red:#DC2626;--red-bg:#FEE2E2;--red-dk:#991B1B;
+  --purple:#7C3AED;--purple-bg:#EDE9FE;--purple-dk:#5B21B6;
+  --teal:#0891B2;--teal-bg:#E0F2FE;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:13px;padding:0 0 60px}
+
+/* Topbar */
+.topbar{background:#1C1B18;color:#fff;padding:0 24px;display:flex;align-items:center;gap:12px;height:46px;position:sticky;top:0;z-index:100;flex-wrap:wrap}
+.topbar-title{font-size:15px;font-weight:700;color:#fff}
+.topbar-title span{color:var(--green)}
+.topbar-sub{font-size:11px;color:#9CA3AF;border-left:1px solid #374151;padding-left:12px}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.topbar-deadline{background:var(--red-bg);color:var(--red-dk);font-size:11px;font-weight:600;padding:3px 10px;border-radius:12px}
+.topbar-home{font-size:11px;color:#9CA3AF;text-decoration:none}
+
+/* Progress header */
+.progress-area{background:var(--card);border-bottom:1px solid var(--border);padding:16px 24px}
+.progress-row{display:flex;align-items:center;gap:16px;margin-bottom:10px;flex-wrap:wrap}
+.progress-title{font-size:14px;font-weight:700}
+.progress-pct{font-size:22px;font-weight:800;color:var(--green)}
+.progress-sub{font-size:11px;color:var(--muted)}
+.prog-bar-bg{background:var(--border);border-radius:8px;height:10px;overflow:hidden;flex:1;min-width:200px}
+.prog-bar-fill{background:linear-gradient(90deg,var(--green),#17B87D);height:100%;border-radius:8px;transition:width .5s ease}
+.phase-pills{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.phase-pill{font-size:11px;font-weight:600;padding:3px 10px;border-radius:12px;cursor:pointer;transition:opacity .15s}
+.phase-pill:hover{opacity:.8}
+
+/* Main layout */
+.content{max-width:900px;margin:0 auto;padding:20px 24px}
+
+/* Phase sections */
+.phase-section{margin-bottom:14px;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--card)}
+.phase-header{padding:14px 16px;display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none}
+.phase-header:hover{filter:brightness(.97)}
+.ph-num{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;flex-shrink:0}
+.ph-info{flex:1}
+.ph-name{font-size:14px;font-weight:700}
+.ph-dates{font-size:11px;color:var(--muted);margin-top:1px}
+.ph-progress{display:flex;align-items:center;gap:8px}
+.ph-prog-bg{width:80px;height:6px;background:rgba(0,0,0,.1);border-radius:4px;overflow:hidden}
+.ph-prog-fill{height:100%;border-radius:4px;transition:width .4s}
+.ph-count{font-size:11px;font-weight:600;white-space:nowrap}
+.chevron{color:#9CA3AF;font-size:12px;transition:transform .2s;margin-left:4px}
+.chevron.open{transform:rotate(180deg)}
+.phase-body{padding:0 16px 14px;display:block}
+.phase-body.collapsed{display:none}
+
+/* Sub-groups */
+.subgroup{margin-top:10px}
+.subgroup-title{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;padding:6px 0 4px;border-bottom:1px solid var(--border);margin-bottom:2px;display:flex;align-items:center;gap:6px}
+.subgroup-icon{font-size:12px}
+
+/* Check items */
+.check-item{display:flex;align-items:flex-start;gap:10px;padding:7px 2px;border-bottom:1px solid #F9F8F5}
+.check-item:last-child{border-bottom:none}
+input[type=checkbox]{width:16px;height:16px;accent-color:var(--green);cursor:pointer;flex-shrink:0;margin-top:2px}
+.check-label{flex:1;cursor:pointer;line-height:1.5}
+.check-main{font-size:12.5px;font-weight:500;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.check-detail{font-size:11px;color:var(--muted);margin-top:2px;line-height:1.5}
+.check-item.done .check-main{text-decoration:line-through;color:var(--muted)}
+.check-item.done .check-detail{color:#C8C7C1}
+
+/* Tags */
+.tag{display:inline-block;font-size:9px;font-weight:700;padding:1px 6px;border-radius:6px;vertical-align:middle;white-space:nowrap}
+.t-critical{background:var(--red-bg);color:var(--red-dk)}
+.t-new{background:var(--green-bg);color:var(--green-dk)}
+.t-tip{background:var(--blue-bg);color:var(--blue-dk)}
+.t-note{background:var(--amber-bg);color:var(--amber-dk)}
+.t-sp{background:#E0F2FE;color:#0E7490}
+.t-pa{background:var(--purple-bg);color:var(--purple-dk)}
+.t-app{background:#FEE2E2;color:#9F1239}
+
+/* Note boxes */
+.note{border-radius:8px;padding:8px 12px;margin:6px 0;font-size:11px;line-height:1.6;border-left:3px solid}
+.note-warn{background:var(--amber-bg);border-color:var(--amber);color:var(--amber-dk)}
+.note-tip{background:var(--green-bg);border-color:var(--green);color:var(--green-dk)}
+.note-info{background:var(--blue-bg);border-color:var(--blue);color:var(--blue-dk)}
+.note-critical{background:var(--red-bg);border-color:var(--red);color:var(--red-dk)}
+
+/* Code inline */
+code{font-family:monospace;font-size:10.5px;background:#F1F5F9;color:#1E40AF;padding:1px 5px;border-radius:3px}
+
+/* Save toast */
+.toast{position:fixed;bottom:20px;right:20px;background:#0F6E56;color:#fff;padding:8px 16px;border-radius:8px;font-size:12px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:999}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-title">License<span>Hub</span></div>
+  <div class="topbar-sub">Checklist v2 — เริ่มจาก 0</div>
+  <div class="topbar-right">
+    <span class="topbar-deadline">⏰ Deadline: 31 มี.ค. 2026</span>
+    <a class="topbar-home" href="index.html">← Hub</a>
+  </div>
+</div>
+
+<div class="progress-area">
+  <div class="progress-row">
+    <div>
+      <div class="progress-title">ความคืบหน้าโดยรวม</div>
+      <div class="progress-sub" id="prog-sub">โหลด...</div>
+    </div>
+    <div class="progress-pct" id="prog-pct">0%</div>
+    <div class="prog-bar-bg">
+      <div class="prog-bar-fill" id="prog-bar" style="width:0%"></div>
+    </div>
+  </div>
+  <div class="phase-pills" id="phase-pills"></div>
+</div>
+
+<div class="content">
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- PHASE 1: SharePoint -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div class="phase-section" id="phase-1">
+  <div class="phase-header" style="background:#EBF4FF" onclick="togglePhase(1)">
+    <div class="ph-num" style="background:#2B7DE9">1</div>
+    <div class="ph-info">
+      <div class="ph-name" style="color:#185FA5">🗄️ SharePoint — สร้าง Lists และ Columns ทั้งหมด</div>
+      <div class="ph-dates">📅 19–20 มี.ค. · ทำก่อน เป็น foundation ของทุกอย่าง</div>
+    </div>
+    <div class="ph-progress">
+      <div class="ph-prog-bg"><div class="ph-prog-fill" id="pp-1" style="width:0%;background:#2B7DE9"></div></div>
+      <div class="ph-count" id="pc-1" style="color:#185FA5">0/0</div>
+    </div>
+    <span class="chevron open" id="chv-1">▾</span>
+  </div>
+  <div class="phase-body" id="pb-1">
+
+    <!-- 1.1 SoftwareCatalog -->
+    <div class="subgroup">
+      <div class="subgroup-title"><span class="subgroup-icon">📚</span>List 1 — SoftwareCatalog <span class="tag t-sp">Master Data</span></div>
+
+      <div class="check-item">
+        <input type="checkbox" id="c1"><label class="check-label" for="c1">
+          <div class="check-main">ไปที่ SharePoint Site → คลิก "New" → "List" → เลือก "Blank list"</div>
+          <div class="check-detail">ตั้งชื่อ: <code>SoftwareCatalog</code> · Description: รายการซอฟต์แวร์ทั้งหมดในองค์กร</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="c2"><label class="check-label" for="c2">
+          <div class="check-main">เพิ่ม column: <code>Vendor</code></div>
+          <div class="check-detail">Type: Single line of text · Required: ✅</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="c3"><label class="check-label" for="c3">
+          <div class="check-main">เพิ่ม column: <code>Category</code></div>
+          <div class="check-detail">Type: Choice · Choices: Productivity, Security, Development, Design, Communication, Other · Required: ✅</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="c4"><label class="check-label" for="c4">
+          <div class="check-main">เพิ่ม column: <code>LicenseType</code></div>
+          <div class="check-detail">Type: Choice · Choices: Per User, Per Device, Site License, Subscription · Required: ✅</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="c5"><label class="check-label" for="c5">
+          <div class="check-main">เพิ่ม column: <code>AnnualCost</code></div>
+          <div class="check-detail">Type: Currency · Required: ❌ (กรอกได้ภายหลัง)</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="c6"><label class="check-label" for="c6">
+          <div class="check-main">กรอกข้อมูลซอฟต์แวร์เริ่มต้น (อย่างน้อย 3-5 รายการ)</div>
+          <div class="check-detail">เช่น Microsoft 365, Adobe Acrobat, Zoom, Figma ฯลฯ</div>
+        </label>
+      </div>
+    </div>
+
+    <!-- 1.2 ApprovalRequests -->
+    <div class="subgroup">
+      <div class="subgroup-title"><span class="subgroup-icon">📋</span>List 2 — ApprovalRequests <span class="tag t-critical">Critical · มี columns ใหม่</span></div>
+      <div class="note note-critical">List นี้สำคัญที่สุด — ต้องมี columns ใหม่สำหรับ Write-Back (PONumber, CCRefID, PurchaseStatus) ก่อนสร้าง Flow ทุก Flow</div>
+
+      <div class="check-item">
+        <input type="checkbox" id="c7"><label class="check-label" for="c7">
+          <div class="check-main">สร้าง List ใหม่ชื่อ <code>ApprovalRequests</code></div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="c8"><label class="check-label" for="c8">
+          <div class="check-main">Column: <code>RequestedBy</code></div>
+          <div class="check-detail">Type: Person or Group · Required: ✅ · Allow multiple: No</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="c9"><label class="check-label" for="c9">
+          <div class="check-main">Column: <code>Department</code></div>
+          <div class="check-detail">Type: Single line of text · Required: ✅</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="c10"><label class="check-label" for="c10">
+          <div class="check-main">Column: <code>SoftwareRef</code></div>
+          <div class="check-detail">Type: Lookup · ชี้ไปที่ List: SoftwareCatalog · Show field: Title · Required: ✅</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="c11"><label class="check-label" for="c11">
+          <div class="check-main">Column: <code>LicenseQty</code></div>
+          <div class="check-detail">Type: Number · Min: 1 · Required: ✅</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="c12"><label class="check-label" for="c12">
+          <div class="check-main">Column: <code>Justification</code></div>
+          <div class="check-detail">Type: Multiple lines of text · Required: ✅</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="c13"><label class="check-label" for="c13">
+          <div class="check-main">Column: <code>ApprovalStatus</code></div>
+          <div class="check-detail">Type: Choice · Choices: Pending, Approved, Rejected · Default: Pending · Required: ✅</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="c14"><label class="check-label" for="c14">
+          <div class="check-main">Column: <code>PaymentMethod</code> <span class="tag t-new">ใหม่</span></div>
+          <div class="check-detail">Type: Choice · Choices: <strong>PR/PO</strong>, <strong>Corporate Card</strong> · Default: PR/PO · Required: ✅<br>⚠️ ค่าต้องตรงกับที่ใช้ใน Flow และ Power Apps พอดี</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="c15"><label class="check-label" for="c15">
+          <div class="check-main">Column: <code>PurchaseStatus</code> <span class="tag t-new">ใหม่</span> <span class="tag t-critical">Trigger Flow 2</span></div>
+          <div class="check-detail">Type: Choice · Choices: <strong>Pending, In Process, Completed, Cancelled</strong> · Default: Pending · Required: ✅<br>⚠️ Flow 2 trigger เมื่อ field นี้เปลี่ยนเป็น "Completed"</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="c16"><label class="check-label" for="c16">
+          <div class="check-main">Column: <code>PONumber</code> <span class="tag t-new">ใหม่</span></div>
+          <div class="check-detail">Type: Single line of text · Required: ❌ (ว่างไว้ก่อน — HR/IT Admin กรอกหลังจัดซื้อ PR/PO เสร็จ)</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="c17"><label class="check-label" for="c17">
+          <div class="check-main">Column: <code>CCRefID</code> <span class="tag t-new">ใหม่</span></div>
+          <div class="check-detail">Type: Single line of text · Required: ❌ (ว่างไว้ก่อน — HR/IT Admin กรอกหลังชำระ Corporate Card เสร็จ)</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="c18"><label class="check-label" for="c18">
+          <div class="check-main">Column: <code>PurchaseCompletedDate</code> <span class="tag t-new">ใหม่</span></div>
+          <div class="check-detail">Type: Date and Time · Required: ❌ · กรอกพร้อมกับ PONumber หรือ CCRefID</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="c19"><label class="check-label" for="c19">
+          <div class="check-main">Column: <code>ApprovalComments</code></div>
+          <div class="check-detail">Type: Multiple lines of text · Required: ❌ · Flow จะ copy เหตุผลจาก Approval response มาใส่</div>
+        </label>
+      </div>
+    </div>
+
+    <!-- 1.3 Licenses -->
+    <div class="subgroup">
+      <div class="subgroup-title"><span class="subgroup-icon">🔑</span>List 3 — Licenses <span class="tag t-new">มี columns ใหม่</span></div>
+
+      <div class="check-item">
+        <input type="checkbox" id="c20"><label class="check-label" for="c20">
+          <div class="check-main">สร้าง List ใหม่ชื่อ <code>Licenses</code></div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="c21"><label class="check-label" for="c21">
+          <div class="check-main">Column: <code>SoftwareRef</code></div>
+          <div class="check-detail">Type: Lookup → SoftwareCatalog · Required: ✅</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="c22"><label class="check-label" for="c22">
+          <div class="check-main">Column: <code>AssignedTo</code></div>
+          <div class="check-detail">Type: Person or Group · Required: ✅</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="c23"><label class="check-label" for="c23">
+          <div class="check-main">Column: <code>LicenseKey</code></div>
+          <div class="check-detail">Type: Single line of text · Required: ✅</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="c24"><label class="check-label" for="c24">
+          <div class="check-main">Column: <code>StartDate</code></div>
+          <div class="check-detail">Type: Date and Time · Required: ✅</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="c25"><label class="check-label" for="c25">
+          <div class="check-main">Column: <code>ExpiryDate</code></div>
+          <div class="check-detail">Type: Date and Time · Required: ✅ · ⚠️ Flow 3 ตรวจ field นี้ทุกวัน</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="c26"><label class="check-label" for="c26">
+          <div class="check-main">Column: <code>Status</code></div>
+          <div class="check-detail">Type: Choice · Choices: Active, Expired, Cancelled, Renewed · Default: Active · Required: ✅</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="c27"><label class="check-label" for="c27">
+          <div class="check-main">Column: <code>RequestRef</code> <span class="tag t-new">ใหม่</span></div>
+          <div class="check-detail">Type: Lookup → ApprovalRequests · Required: ✅ · ทำให้ trace ได้ว่า License มาจาก Request ไหน</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="c28"><label class="check-label" for="c28">
+          <div class="check-main">Column: <code>PurchaseRef</code> <span class="tag t-new">ใหม่</span></div>
+          <div class="check-detail">Type: Single line of text · Required: ✅ · Copy PONumber หรือ CCRefID มาเก็บไว้ที่นี่ด้วย</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="c29"><label class="check-label" for="c29">
+          <div class="check-main">Column: <code>Notes</code></div>
+          <div class="check-detail">Type: Multiple lines of text · Required: ❌ · สำหรับหมายเหตุพิเศษ</div>
+        </label>
+      </div>
+      <!-- Lifecycle columns - Priority 0 -->
+      <div class="subgroup-title" style="background:#FFF7ED;color:#92400E;border-radius:6px;padding:6px 10px;margin-top:10px"><span class="subgroup-icon">🔁</span>Columns สำหรับ License Lifecycle <span class="tag t-critical">Priority 0</span></div>
+      <div class="check-item">
+        <input type="checkbox" id="c29b"><label class="check-label" for="c29b">
+          <div class="check-main">Column: <code>MovementStatus</code> <span class="tag t-new">ใหม่</span> <span class="tag t-critical">Priority 0</span></div>
+          <div class="check-detail">Type: Choice · Choices: <strong>Active, Transferred, Returned to Pool, Cancelled</strong> · Default: Active<br>ใช้ track ว่า License หลุดลอยหรือไม่ หลัง Resign/Transfer</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="c29c"><label class="check-label" for="c29c">
+          <div class="check-main">Column: <code>MovementReason</code> <span class="tag t-new">ใหม่</span></div>
+          <div class="check-detail">Type: Choice · Choices: <strong>Resign, Transfer, Other</strong> · Required: ❌<br>IT Admin กรอกเมื่อดำเนินการ Movement</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="c29d"><label class="check-label" for="c29d">
+          <div class="check-main">Column: <code>TransferredTo</code> <span class="tag t-new">ใหม่</span></div>
+          <div class="check-detail">Type: Person or Group · Required: ❌ · กรอกเมื่อ Action = "Transfer" เพื่อระบุผู้รับ License</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="c29e"><label class="check-label" for="c29e">
+          <div class="check-main">Column: <code>ExpiryAction</code> <span class="tag t-new">ใหม่</span> <span class="tag t-critical">Priority 0</span></div>
+          <div class="check-detail">Type: Choice · Choices: <strong>Not Set, Renew, Cancel, Transfer</strong> · Default: Not Set<br>Manager หรือ IT Admin เลือกใน Power Apps เมื่อใกล้หมดอายุ</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="c29f"><label class="check-label" for="c29f">
+          <div class="check-main">Column: <code>ExpiryActionStatus</code> <span class="tag t-new">ใหม่</span> <span class="tag t-critical">Flow 3 ใช้</span></div>
+          <div class="check-detail">Type: Choice · Choices: <strong>Not Required, Pending Decision, Action Required, Done</strong> · Default: Not Required<br>Flow 3 จะ set เป็น "Pending Decision" อัตโนมัติเมื่อ 30 วันก่อนหมด</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="c29g"><label class="check-label" for="c29g">
+          <div class="check-main">Column: <code>ExpiryActionBy</code> <span class="tag t-new">ใหม่</span></div>
+          <div class="check-detail">Type: Person or Group · Required: ❌ · IT Admin ที่รับผิดชอบดำเนินการที่ Vendor Portal — บันทึกเพื่อ Accountability</div>
+        </label>
+      </div>
+    </div>
+
+    <!-- 1.4 LicenseHistory -->
+    <div class="subgroup">
+      <div class="subgroup-title"><span class="subgroup-icon">📜</span>List 4 — LicenseHistory <span class="tag t-tip">Audit Log อัตโนมัติ</span></div>
+      <div class="note note-tip">List นี้ Flow จะเขียนให้อัตโนมัติ ไม่ต้องกรอกเอง แค่สร้าง columns ให้ครบ</div>
+
+      <div class="check-item">
+        <input type="checkbox" id="c30"><label class="check-label" for="c30">
+          <div class="check-main">สร้าง List ใหม่ชื่อ <code>LicenseHistory</code></div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="c31"><label class="check-label" for="c31">
+          <div class="check-main">Column: <code>LicenseRef</code></div>
+          <div class="check-detail">Type: Lookup → Licenses · Required: ❌</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="c32"><label class="check-label" for="c32">
+          <div class="check-main">Column: <code>Action</code></div>
+          <div class="check-detail">Type: Choice · Choices: Purchase Completed, License Assigned, Renewed, Expired, Cancelled, Transferred</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="c33"><label class="check-label" for="c33">
+          <div class="check-main">Column: <code>ActionDate</code></div>
+          <div class="check-detail">Type: Date and Time · Required: ✅</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="c34"><label class="check-label" for="c34">
+          <div class="check-main">Column: <code>ActionBy</code></div>
+          <div class="check-detail">Type: Person or Group · Required: ❌</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="c35"><label class="check-label" for="c35">
+          <div class="check-main">Column: <code>Reference</code></div>
+          <div class="check-detail">Type: Single line of text · เก็บ PONumber หรือ CCRefID หรือข้อมูลอ้างอิงอื่นๆ</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="c36"><label class="check-label" for="c36">
+          <div class="check-main">Column: <code>Remarks</code></div>
+          <div class="check-detail">Type: Multiple lines of text · Required: ❌</div>
+        </label>
+      </div>
+    </div>
+
+    <!-- 1.5 Permissions -->
+    <div class="subgroup">
+      <div class="subgroup-title"><span class="subgroup-icon">🔒</span>ตั้งค่า Permissions</div>
+      <div class="check-item">
+        <input type="checkbox" id="c37"><label class="check-label" for="c37">
+          <div class="check-main">กำหนดสิทธิ์ HR/IT Admin: Edit ทุก List</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="c38"><label class="check-label" for="c38">
+          <div class="check-main">กำหนดสิทธิ์ Employee: Contribute เฉพาะ ApprovalRequests (สร้างได้ แก้ไขของตัวเองได้)</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="c39"><label class="check-label" for="c39">
+          <div class="check-main">กำหนดสิทธิ์ Manager: Read ทุก List (เพื่อ approve ผ่าน email link ได้)</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="c40"><label class="check-label" for="c40">
+          <div class="check-main">ทดสอบ: กรอก test item ใน ApprovalRequests แล้วลบทิ้ง เพื่อให้แน่ใจว่า columns ครบ</div>
+        </label>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- PHASE 2: Power Automate -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div class="phase-section" id="phase-2">
+  <div class="phase-header" style="background:var(--purple-bg)" onclick="togglePhase(2)">
+    <div class="ph-num" style="background:var(--purple)">2</div>
+    <div class="ph-info">
+      <div class="ph-name" style="color:var(--purple-dk)">⚡ Power Automate — 3 Flows</div>
+      <div class="ph-dates">📅 21–24 มี.ค. · ทำหลัง SharePoint พร้อมแล้ว</div>
+    </div>
+    <div class="ph-progress">
+      <div class="ph-prog-bg"><div class="ph-prog-fill" id="pp-2" style="width:0%;background:var(--purple)"></div></div>
+      <div class="ph-count" id="pc-2" style="color:var(--purple-dk)">0/0</div>
+    </div>
+    <span class="chevron" id="chv-2">▾</span>
+  </div>
+  <div class="phase-body collapsed" id="pb-2">
+
+    <!-- Flow 1 -->
+    <div class="subgroup">
+      <div class="subgroup-title"><span class="subgroup-icon">⚡</span>Flow 1 — Request &amp; Approval <span class="tag t-pa">PowerApps V2 Trigger</span></div>
+      <div class="note note-info">Flow นี้ถูก trigger โดย Power Apps ตอนที่พนักงาน submit Request Form</div>
+
+      <div class="check-item">
+        <input type="checkbox" id="f1"><label class="check-label" for="f1">
+          <div class="check-main">สร้าง Flow ใหม่ → Automated cloud flow → ตั้งชื่อ "LIC-Flow1-RequestApproval"</div>
+          <div class="check-detail">Trigger: PowerApps V2</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="f2"><label class="check-label" for="f2">
+          <div class="check-main">Step 1: Create item → SharePoint → ApprovalRequests</div>
+          <div class="check-detail">Map fields: Title, RequestedBy, Department, SoftwareRef, LicenseQty, Justification, PaymentMethod<br>Set: ApprovalStatus = "Pending", PurchaseStatus = "Pending"</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="f3"><label class="check-label" for="f3">
+          <div class="check-main">Step 2: Start and wait for an approval</div>
+          <div class="check-detail">Approval type: Approve/Reject - First to respond<br>Title: "คำขอ Software License: [Title]"<br>Assigned to: [Manager Email]<br>Details: Software, Qty, Justification, PaymentMethod</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="f4"><label class="check-label" for="f4">
+          <div class="check-main">Step 3: Condition — Response eq 'Approve'</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="f5"><label class="check-label" for="f5">
+          <div class="check-main">ถ้า Yes (อนุมัติ): Update item → ApprovalStatus = "Approved", PurchaseStatus = "In Process"</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="f6"><label class="check-label" for="f6">
+          <div class="check-main">ถ้า Yes: Switch(PaymentMethod) — Case "PR/PO" → Send Email to แผนกจัดซื้อ</div>
+          <div class="check-detail">Subject: "[ACTION NEEDED] คำขอ PO สำหรับ [Software]"<br>Body: ชื่อซอฟต์แวร์, จำนวน, ผู้ขอ + link Admin Power Apps สำหรับกรอก PO Number</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="f7"><label class="check-label" for="f7">
+          <div class="check-main">ถ้า Yes: Switch(PaymentMethod) — Case "Corporate Card" → Send Email to แผนกการเงิน</div>
+          <div class="check-detail">Subject: "[ACTION NEEDED] ชำระค่า License ด้วยบัตรองค์กร: [Software]"<br>Body: ชื่อซอฟต์แวร์, จำนวน, ราคา + link Admin Power Apps สำหรับกรอก CC Ref ID</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="f8"><label class="check-label" for="f8">
+          <div class="check-main">ถ้า No (ปฏิเสธ): Update item → ApprovalStatus = "Rejected", PurchaseStatus = "Cancelled", ApprovalComments = [Response Comments]</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="f9"><label class="check-label" for="f9">
+          <div class="check-main">ถ้า No: Send Email to พนักงาน (RequestedBy) แจ้งผลปฏิเสธ</div>
+          <div class="check-detail">Subject: "ผลการพิจารณาคำขอ License: [Software]"<br>Body: แจ้งผลปฏิเสธ + เหตุผล (ApprovalComments)</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="f10"><label class="check-label" for="f10">
+          <div class="check-main">บันทึกและ Test Flow 1 ด้วย test data</div>
+          <div class="check-detail">ทดสอบทั้ง path อนุมัติ-PR/PO, อนุมัติ-CorpCard, และปฏิเสธ</div>
+        </label>
+      </div>
+    </div>
+
+    <!-- Flow 2 -->
+    <div class="subgroup">
+      <div class="subgroup-title"><span class="subgroup-icon">⚡</span>Flow 2 — Purchase Complete Trigger <span class="tag t-critical">Write-Back Listener</span></div>
+      <div class="note note-critical">Flow นี้คือ "ประตู" ที่เปิด Phase 3 — trigger เมื่อ PurchaseStatus = "Completed"</div>
+
+      <div class="check-item">
+        <input type="checkbox" id="f11"><label class="check-label" for="f11">
+          <div class="check-main">สร้าง Flow ใหม่ → Automated → ตั้งชื่อ "LIC-Flow2-PurchaseComplete"</div>
+          <div class="check-detail">Trigger: When an item is modified → Site: [SharePoint Site] → List: ApprovalRequests</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="f12"><label class="check-label" for="f12">
+          <div class="check-main">Step 1: Condition — PurchaseStatus eq 'Completed'</div>
+          <div class="check-detail">ถ้า No → Terminate (Succeeded) เพื่อกัน Flow ทำงานโดยไม่จำเป็น</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="f13"><label class="check-label" for="f13">
+          <div class="check-main">Step 2: Get item → ApprovalRequests (ดึงข้อมูลล่าสุดอีกครั้ง)</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="f14"><label class="check-label" for="f14">
+          <div class="check-main">Step 3: คำนวณ Reference Number</div>
+          <div class="check-detail">Expression: <code>if(empty(triggerOutputs()?['body/PONumber']), triggerOutputs()?['body/CCRefID'], triggerOutputs()?['body/PONumber'])</code></div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="f15"><label class="check-label" for="f15">
+          <div class="check-main">Step 4: Send Email to HR/IT Admin</div>
+          <div class="check-detail">Subject: "✅ [SOFTWARE] จัดซื้อเสร็จแล้ว — กรุณา Assign License"<br>Body: ชื่อซอฟต์แวร์, ผู้ขอ, Reference = [PONumber หรือ CCRefID], link Power Apps Admin</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="f16"><label class="check-label" for="f16">
+          <div class="check-main">Step 5: Create item → LicenseHistory</div>
+          <div class="check-detail">Action: "Purchase Completed" · ActionDate: utcNow() · Reference: PONumber หรือ CCRefID · Remarks: PaymentMethod</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="f17"><label class="check-label" for="f17">
+          <div class="check-main">บันทึกและ Test Flow 2</div>
+          <div class="check-detail">แก้ PurchaseStatus ใน SharePoint เป็น "Completed" แล้วดูว่า HR/IT Admin ได้รับ Email ไหม</div>
+        </label>
+      </div>
+    </div>
+
+    <!-- Flow 3 -->
+    <div class="subgroup">
+      <div class="subgroup-title"><span class="subgroup-icon">⚡</span>Flow 3 — Expiry Action Flow <span class="tag t-critical">Priority 0 — บังคับให้ตัดสินใจ ไม่ใช่แค่แจ้งเตือน</span></div>
+      <div class="note note-critical">Flow นี้ต้องบังคับให้มีคนรับผิดชอบจนกว่าจะ "Done" ที่ Vendor Portal — ไม่ใช่แค่ส่ง Email แล้วจบ</div>
+
+      <div class="check-item">
+        <input type="checkbox" id="f18"><label class="check-label" for="f18">
+          <div class="check-main">สร้าง Flow ใหม่ → Scheduled → ตั้งชื่อ "LIC-Flow3-ExpiryAction"</div>
+          <div class="check-detail">Trigger: Recurrence · Interval: 1 · Frequency: Day · Start time: 08:00</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="f19"><label class="check-label" for="f19">
+          <div class="check-main">Step 1: Get items → Licenses</div>
+          <div class="check-detail">Filter Query: <code>Status eq 'Active' and ExpiryActionStatus ne 'Done'</code> — กัน License ที่ดำเนินการแล้ว</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="f20"><label class="check-label" for="f20">
+          <div class="check-main">Step 2: Apply to each — คำนวณ DaysLeft</div>
+          <div class="check-detail">Expression: <code>div(sub(ticks(item()?['ExpiryDate']),ticks(utcNow())),864000000000)</code></div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="f20b"><label class="check-label" for="f20b">
+          <div class="check-main">Step 3a: DaysLeft = 30 → ตั้ง ExpiryActionStatus + ส่ง Email <span class="tag t-critical">Priority 0</span></div>
+          <div class="check-detail">Update item: ExpiryActionStatus = "Pending Decision"<br>Send Email ถึง: License Owner + Manager + IT Admin<br>เนื้อหา: "License [Name] หมดอายุใน 30 วัน — กรุณาเลือก [ต่ออายุ / ยกเลิก / โอนย้าย] ใน Power Apps"<br>แนบ: Link ตรงไปหน้า Admin Screen</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="f20c"><label class="check-label" for="f20c">
+          <div class="check-main">Step 3b: DaysLeft = 7 AND ExpiryActionStatus = "Pending Decision" → Escalate</div>
+          <div class="check-detail">Send Email IT Admin + Manager: "⚠️ ยังไม่มีการตัดสินใจ License หมดใน 7 วัน — ดำเนินการด่วน"</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="f20d"><label class="check-label" for="f20d">
+          <div class="check-main">Step 3c: DaysLeft = 1 AND ExpiryActionStatus ≠ "Done" → Action Required</div>
+          <div class="check-detail">Update item: ExpiryActionStatus = "Action Required"<br>Send Email IT Admin: "🚨 License หมดพรุ่งนี้ — ดำเนินการที่ Vendor Portal ทันที"</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="f21"><label class="check-label" for="f21">
+          <div class="check-main">Step 4: DaysLeft ≤ 0 → Update Expired + ส่ง Task ให้ IT Admin <span class="tag t-critical">Priority 0</span></div>
+          <div class="check-detail">Update item: Status = "Expired"<br>Create LicenseHistory: Action = "Expired"<br>Send Email IT Admin: "License [Name] หมดอายุแล้ว — ยืนยันการ Cancel/Renew ที่ Vendor Portal แล้ว mark Done ใน Power Apps"</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="f23"><label class="check-label" for="f23">
+          <div class="check-main">ทดสอบ Flow 3: Set ExpiryDate Test License เป็น Today+30 วัน → ตรวจ Email + ExpiryActionStatus</div>
+        </label>
+      </div>
+    </div>
+
+    <!-- Flow 4 -->
+    <div class="subgroup">
+      <div class="subgroup-title"><span class="subgroup-icon">⚡</span>Flow 4 — License Movement <span class="tag t-new">ใหม่</span> <span class="tag t-critical">Priority 0 — Resign/Transfer</span></div>
+      <div class="note note-critical">ต้องทำก่อน IT Admin ปิด AD Account พนักงาน — ถ้าปิด Account ก่อน License จะหลุดลอยทันที</div>
+
+      <div class="check-item">
+        <input type="checkbox" id="f24"><label class="check-label" for="f24">
+          <div class="check-main">สร้าง Flow ใหม่ → Instant → PowerApps V2 Trigger → ตั้งชื่อ "LIC-Flow4-LicenseMovement"</div>
+          <div class="check-detail">รับ Input จาก Power Apps: LicenseID (string), MovementAction (string), TransferToEmail (string), Reason (string)</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="f25"><label class="check-label" for="f25">
+          <div class="check-main">Step 1: Get item → Licenses (LicenseID)</div>
+          <div class="check-detail">ดึงข้อมูล License ที่จะ Movement</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="f26"><label class="check-label" for="f26">
+          <div class="check-main">Step 2: Switch(MovementAction) — 3 branches</div>
+          <div class="check-detail">
+            <strong>Transfer:</strong> Update AssignedTo=TransferToEmail, MovementStatus="Transferred", TransferredTo=TransferToEmail, MovementReason=Reason<br>
+            → Email ผู้รับใหม่ + Manager ว่าโอน License แล้ว<br>
+            <strong>Return to Pool:</strong> Update AssignedTo=blank, MovementStatus="Returned to Pool", MovementReason=Reason<br>
+            → Email IT Admin + Manager<br>
+            <strong>Cancel:</strong> Update Status="Cancelled", MovementStatus="Cancelled", ExpiryAction="Cancel", MovementReason=Reason<br>
+            → Email IT Admin: "ต้อง Cancel ที่ Vendor Portal ด้วย"
+          </div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="f27"><label class="check-label" for="f27">
+          <div class="check-main">Step 3: Create item → LicenseHistory (ทุก branch)</div>
+          <div class="check-detail">Action = MovementAction, Note = Reason, ChangedDate = utcNow() — Audit trail ครบ</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="f28"><label class="check-label" for="f28">
+          <div class="check-main">ทดสอบ Flow 4: ทดสอบทั้ง 3 actions (Transfer / Return / Cancel) จาก Power Apps</div>
+        </label>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- PHASE 3: Power Apps -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div class="phase-section" id="phase-3">
+  <div class="phase-header" style="background:#FEE2E2" onclick="togglePhase(3)">
+    <div class="ph-num" style="background:var(--red)">3</div>
+    <div class="ph-info">
+      <div class="ph-name" style="color:var(--red-dk)">📱 Power Apps — 3 Screens</div>
+      <div class="ph-dates">📅 24–26 มี.ค. · สร้างพร้อม Flow หรือหลัง Flow พร้อม</div>
+    </div>
+    <div class="ph-progress">
+      <div class="ph-prog-bg"><div class="ph-prog-fill" id="pp-3" style="width:0%;background:var(--red)"></div></div>
+      <div class="ph-count" id="pc-3" style="color:var(--red-dk)">0/0</div>
+    </div>
+    <span class="chevron" id="chv-3">▾</span>
+  </div>
+  <div class="phase-body collapsed" id="pb-3">
+
+    <!-- App setup -->
+    <div class="subgroup">
+      <div class="subgroup-title"><span class="subgroup-icon">📱</span>ตั้งค่า App</div>
+      <div class="check-item">
+        <input type="checkbox" id="a1"><label class="check-label" for="a1">
+          <div class="check-main">เปิด Power Apps → สร้าง Canvas App ใหม่ → ตั้งชื่อ "LicenseManagementApp"</div>
+          <div class="check-detail">Format: Tablet (แนะนำ) หรือ Phone</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="a2"><label class="check-label" for="a2">
+          <div class="check-main">เพิ่ม Data Sources: SoftwareCatalog, ApprovalRequests, Licenses, LicenseHistory</div>
+          <div class="check-detail">Data → Add data → SharePoint → เลือก Site → เลือก Lists ทั้ง 4</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="a3"><label class="check-label" for="a3">
+          <div class="check-main">เพิ่ม Connection ไปยัง Flow 1 (LIC-Flow1-RequestApproval)</div>
+          <div class="check-detail">Data → Add data → Flows → เลือก LIC-Flow1-RequestApproval</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="a3b"><label class="check-label" for="a3b">
+          <div class="check-main">เพิ่ม Connection ไปยัง Flow 4 (LIC-Flow4-LicenseMovement) <span class="tag t-new">ใหม่</span> <span class="tag t-critical">Priority 0</span></div>
+          <div class="check-detail">Data → Add data → Flows → เลือก LIC-Flow4-LicenseMovement · ใช้ใน Admin Screen สำหรับ Movement Panel และ Expiry Decision Panel</div>
+        </label>
+      </div>
+    </div>
+
+    <!-- Screen 1: Request Form -->
+    <div class="subgroup">
+      <div class="subgroup-title"><span class="subgroup-icon">📝</span>Screen 1 — Request Form (พนักงานยื่นขอ)</div>
+      <div class="check-item">
+        <input type="checkbox" id="a4"><label class="check-label" for="a4">
+          <div class="check-main">เพิ่ม Screen ตั้งชื่อ "RequestForm"</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="a5"><label class="check-label" for="a5">
+          <div class="check-main">Label: "ชื่อซอฟต์แวร์" + Dropdown (ddSoftware)</div>
+          <div class="check-detail">Items: <code>SoftwareCatalog.Title</code></div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="a6"><label class="check-label" for="a6">
+          <div class="check-main">Label: "จำนวน License" + Text Input (txtQty) — Default: "1"</div>
+          <div class="check-detail">InputTextMode: Numeric</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="a7"><label class="check-label" for="a7">
+          <div class="check-main">Label: "เหตุผลที่ต้องการ" + Text Input (txtJustification) — Mode: Multiline</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="a8"><label class="check-label" for="a8">
+          <div class="check-main">Label: "ช่องทางการจัดซื้อ" + Dropdown (ddPayment) <span class="tag t-new">ใหม่</span></div>
+          <div class="check-detail">Items: <code>["PR/PO","Corporate Card"]</code> · Default: <code>"PR/PO"</code></div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="a9"><label class="check-label" for="a9">
+          <div class="check-main">ปุ่ม "ยื่นคำขอ" (btnSubmit) — OnSelect Power Fx</div>
+          <div class="check-detail"><code>If(IsBlank(ddSoftware.Selected) || IsBlank(txtQty.Text) || IsBlank(txtJustification.Text), Notify("กรุณากรอกข้อมูลให้ครบ", NotificationType.Error), LIC_Flow1_RequestApproval.Run(ddSoftware.Selected.Value, Value(txtQty.Text), txtJustification.Text, ddPayment.Selected.Value, User().FullName); Notify("ส่งคำขอเรียบร้อยแล้ว", NotificationType.Success); ResetForm(RequestForm))</code></div>
+        </label>
+      </div>
+    </div>
+
+    <!-- Screen 2: Dashboard -->
+    <div class="subgroup">
+      <div class="subgroup-title"><span class="subgroup-icon">📊</span>Screen 2 — Dashboard (ภาพรวม License)</div>
+      <div class="check-item">
+        <input type="checkbox" id="a10"><label class="check-label" for="a10">
+          <div class="check-main">เพิ่ม Screen ตั้งชื่อ "Dashboard"</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="a11"><label class="check-label" for="a11">
+          <div class="check-main">Gallery: Active Licenses</div>
+          <div class="check-detail">Items: <code>Filter(Licenses, Status="Active")</code></div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="a12"><label class="check-label" for="a12">
+          <div class="check-main">Gallery: Licenses ใกล้หมดอายุ (≤ 30 วัน)</div>
+          <div class="check-detail">Items: <code>Filter(Licenses, Status="Active" && DateDiff(Today(), ExpiryDate, Days) <= 30)</code></div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="a13"><label class="check-label" for="a13">
+          <div class="check-main">Label: รอ Write-Back <span class="tag t-new">ใหม่</span></div>
+          <div class="check-detail">Text: <code>"รอกรอก Reference: " & CountRows(Filter(ApprovalRequests, PurchaseStatus="In Process"))</code> · Color: Orange ถ้า > 0</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="a14"><label class="check-label" for="a14">
+          <div class="check-main">Stat Card: จำนวน Active License ทั้งหมด</div>
+          <div class="check-detail">Text: <code>CountRows(Filter(Licenses, Status="Active"))</code></div>
+        </label>
+      </div>
+    </div>
+
+    <!-- Screen 3: Admin -->
+    <div class="subgroup">
+      <div class="subgroup-title"><span class="subgroup-icon">⚙️</span>Screen 3 — Admin (HR/IT Admin ใช้งาน)</div>
+      <div class="note note-warn">Screen นี้ต้องมีส่วน Write-Back — นี่คือตัวที่ trigger Phase 3</div>
+      <div class="check-item">
+        <input type="checkbox" id="a15"><label class="check-label" for="a15">
+          <div class="check-main">เพิ่ม Screen ตั้งชื่อ "AdminScreen"</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="a16"><label class="check-label" for="a16">
+          <div class="check-main">Gallery: Pending Purchases (รอ Write-Back) <span class="tag t-new">ใหม่</span></div>
+          <div class="check-detail">Items: <code>Filter(ApprovalRequests, PurchaseStatus="In Process")</code><br>แสดง: Title, RequestedBy, PaymentMethod</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="a17"><label class="check-label" for="a17">
+          <div class="check-main">Text Input: txtPONumber — Visible เฉพาะ PR/PO <span class="tag t-new">ใหม่</span></div>
+          <div class="check-detail">Visible: <code>galPending.Selected.PaymentMethod = "PR/PO"</code><br>HintText: "กรอกเลข PO เช่น PO-2026-001"</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="a18"><label class="check-label" for="a18">
+          <div class="check-main">Text Input: txtCCRefID — Visible เฉพาะ Corporate Card <span class="tag t-new">ใหม่</span></div>
+          <div class="check-detail">Visible: <code>galPending.Selected.PaymentMethod = "Corporate Card"</code><br>HintText: "กรอก Transaction ID เช่น TXN-XXXX"</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="a19"><label class="check-label" for="a19">
+          <div class="check-main">ปุ่ม "✅ จัดซื้อเสร็จแล้ว" — OnSelect Power Fx <span class="tag t-critical">Trigger Flow 2</span></div>
+          <div class="check-detail"><code>Patch(ApprovalRequests, galPending.Selected, {PONumber: txtPONumber.Text, CCRefID: txtCCRefID.Text, PurchaseStatus: "Completed", PurchaseCompletedDate: Today()}); Notify("บันทึกสำเร็จ — Flow จะแจ้งเตือน HR/IT Admin อัตโนมัติ", NotificationType.Success)</code></div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="a20"><label class="check-label" for="a20">
+          <div class="check-main">Form: กรอก License Key หลังได้รับจาก Vendor</div>
+          <div class="check-detail">Form ที่ Patch ลงใน Licenses List: Title, SoftwareRef, AssignedTo, LicenseKey, StartDate, ExpiryDate, RequestRef, PurchaseRef</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="a21"><label class="check-label" for="a21">
+          <div class="check-main">Gallery: License ทั้งหมด (ดู/แก้ไข/ยกเลิก)</div>
+          <div class="check-detail">Items: <code>Sort(Licenses, ExpiryDate, Ascending)</code></div>
+        </label>
+      </div>
+    </div>
+
+    <!-- Expiry Decision Panel -->
+    <div class="subgroup">
+      <div class="subgroup-title" style="background:#FFF0F0;color:var(--red-dk);border-radius:6px;padding:6px 10px"><span class="subgroup-icon">⏰</span>Expiry Decision Panel — Admin Screen <span class="tag t-new">ใหม่</span> <span class="tag t-critical">Priority 0</span></div>
+      <div class="note note-critical">Panel นี้แสดง License ที่ Flow 3 set ExpiryActionStatus = "Pending Decision" หรือ "Action Required" ให้ IT Admin/Manager มาเลือก Action</div>
+      <div class="check-item">
+        <input type="checkbox" id="a22"><label class="check-label" for="a22">
+          <div class="check-main">Gallery: "Expiry Pending" แสดง License ที่รอตัดสินใจ</div>
+          <div class="check-detail">Items: <code>Filter(Licenses, ExpiryActionStatus = "Pending Decision" || ExpiryActionStatus = "Action Required")</code><br>แสดง: ชื่อ Software, AssignedTo, ExpiryDate, DaysLeft (คำนวณ)</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="a23"><label class="check-label" for="a23">
+          <div class="check-main">Dropdown: ExpiryAction — Items: <code>["Renew","Cancel","Transfer"]</code></div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="a24"><label class="check-label" for="a24">
+          <div class="check-main">Person Picker: TransferTo — Visible เมื่อ ExpiryAction = "Transfer"</div>
+          <div class="check-detail">Visible: <code>ddExpiryAction.Selected.Value = "Transfer"</code></div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="a25"><label class="check-label" for="a25">
+          <div class="check-main">ปุ่ม "ยืนยันการตัดสินใจ" — Patch + Trigger Flow 4</div>
+          <div class="check-detail"><code>Patch(Licenses, galExpiry.Selected, {ExpiryAction: ddExpiryAction.Selected.Value, ExpiryActionBy: User().Email, ExpiryActionStatus: "Action Required"}); LicenseMovementFlow.Run(galExpiry.Selected.ID, ddExpiryAction.Selected.Value, ppTransferTo.Selected.Email, "Expiry")</code></div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="a26"><label class="check-label" for="a26">
+          <div class="check-main">ปุ่ม "✅ ดำเนินการเสร็จแล้ว (Vendor)" — IT Admin กดหลัง Cancel/Renew ที่ Vendor Portal จริงๆ</div>
+          <div class="check-detail"><code>Patch(Licenses, galExpiry.Selected, {ExpiryActionStatus: "Done"})</code><br>ปุ่มนี้คือ "หลักฐาน" ว่า IT Admin ได้ไปทำที่ Vendor Portal แล้ว</div>
+        </label>
+      </div>
+    </div>
+
+    <!-- License Movement Panel -->
+    <div class="subgroup">
+      <div class="subgroup-title" style="background:#FFFBEB;color:var(--amber-dk);border-radius:6px;padding:6px 10px"><span class="subgroup-icon">🔀</span>License Movement Panel — Admin Screen <span class="tag t-new">ใหม่</span> <span class="tag t-critical">Priority 0</span></div>
+      <div class="note note-warn">ใช้เมื่อ HR แจ้ง Resign/Transfer — ต้องดำเนินการก่อนปิด AD Account พนักงาน</div>
+      <div class="check-item">
+        <input type="checkbox" id="a27"><label class="check-label" for="a27">
+          <div class="check-main">Text Input: ค้นหาชื่อพนักงาน</div>
+          <div class="check-detail">ใช้ค้นหา License ของพนักงานคนนั้น</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="a28"><label class="check-label" for="a28">
+          <div class="check-main">Gallery: License ทั้งหมดของพนักงานที่ค้นหา</div>
+          <div class="check-detail">Items: <code>Filter(Licenses, AssignedTo.Email = txtSearchEmp.Text && Status = "Active")</code></div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="a29"><label class="check-label" for="a29">
+          <div class="check-main">Dropdown: MovementAction — Items: <code>["Transfer","Return to Pool","Cancel"]</code></div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="a30"><label class="check-label" for="a30">
+          <div class="check-main">Person Picker: TransferTo — Visible เมื่อ MovementAction = "Transfer"</div>
+          <div class="check-detail">Visible: <code>ddMovement.Selected.Value = "Transfer"</code></div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="a31"><label class="check-label" for="a31">
+          <div class="check-main">Dropdown: MovementReason — Items: <code>["Resign","Transfer","Other"]</code></div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="a32"><label class="check-label" for="a32">
+          <div class="check-main">ปุ่ม "ดำเนินการ Movement" — Trigger Flow 4</div>
+          <div class="check-detail"><code>LicenseMovementFlow.Run(galEmpLic.Selected.ID, ddMovement.Selected.Value, ppTransferTo.Selected.Email, ddReason.Selected.Value); Notify("ดำเนินการสำเร็จ", NotificationType.Success)</code></div>
+        </label>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- PHASE 4: Testing -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div class="phase-section" id="phase-4">
+  <div class="phase-header" style="background:var(--amber-bg)" onclick="togglePhase(4)">
+    <div class="ph-num" style="background:var(--amber)">4</div>
+    <div class="ph-info">
+      <div class="ph-name" style="color:var(--amber-dk)">🧪 Testing &amp; UAT</div>
+      <div class="ph-dates">📅 27–28 มี.ค. · ทดสอบครบทุก scenario</div>
+    </div>
+    <div class="ph-progress">
+      <div class="ph-prog-bg"><div class="ph-prog-fill" id="pp-4" style="width:0%;background:var(--amber)"></div></div>
+      <div class="ph-count" id="pc-4" style="color:var(--amber-dk)">0/0</div>
+    </div>
+    <span class="chevron" id="chv-4">▾</span>
+  </div>
+  <div class="phase-body collapsed" id="pb-4">
+    <div class="subgroup">
+      <div class="subgroup-title"><span class="subgroup-icon">🧪</span>Test Scenarios — ครบทุก path</div>
+
+      <div class="check-item">
+        <input type="checkbox" id="t1"><label class="check-label" for="t1">
+          <div class="check-main">Scenario 1: Request → Approve → PR/PO → Write PO# → License Assigned</div>
+          <div class="check-detail">✅ ตรวจว่า Email ไปถึง: จัดซื้อ → HR/IT Admin → พนักงาน (License พร้อม)</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="t2"><label class="check-label" for="t2">
+          <div class="check-main">Scenario 2: Request → Approve → Corporate Card → Write CC ID → License Assigned</div>
+          <div class="check-detail">✅ ตรวจว่า Email ไปถึง: การเงิน → HR/IT Admin → พนักงาน (License พร้อม)</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="t3"><label class="check-label" for="t3">
+          <div class="check-main">Scenario 3: Request → Reject → พนักงานได้รับ Email พร้อมเหตุผล</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="t4"><label class="check-label" for="t4">
+          <div class="check-main">Scenario 4: License 30 วันก่อนหมด → Flow 3 set ExpiryActionStatus="Pending Decision" + Email ครบ 3 คน <span class="tag t-critical">Priority 0</span></div>
+          <div class="check-detail">Set ExpiryDate = Today()+30 → Run Flow manually → ตรวจ: (1) ExpiryActionStatus เปลี่ยน (2) Email ถึง Owner+Manager+IT Admin (3) มี Link Power Apps ใน Email</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="t5"><label class="check-label" for="t5">
+          <div class="check-main">Scenario 5: Expiry Action — Manager เลือก "Cancel" ใน Power Apps → IT Admin mark "Done" <span class="tag t-critical">Priority 0</span></div>
+          <div class="check-detail">ตรวจ: (1) ExpiryAction = "Cancel" (2) ExpiryActionBy บันทึกชื่อ IT Admin (3) เมื่อ mark Done: ExpiryActionStatus = "Done"</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="t5b"><label class="check-label" for="t5b">
+          <div class="check-main">Scenario 6: License Expired → Status = "Expired" + IT Admin ได้รับ Task Email + LicenseHistory บันทึก</div>
+          <div class="check-detail">Set ExpiryDate = Yesterday → Run Flow → ตรวจ Status + LicenseHistory log + Email IT Admin</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="t5c"><label class="check-label" for="t5c">
+          <div class="check-main">Scenario 7: License Movement — พนักงาน Resign → IT Admin โอน License ให้คนอื่น (Transfer) <span class="tag t-critical">Priority 0</span></div>
+          <div class="check-detail">ใช้ Movement Panel ใน Power Apps → เลือก Transfer → ระบุผู้รับ → ตรวจ: (1) AssignedTo เปลี่ยน (2) MovementStatus="Transferred" (3) Email ผู้รับใหม่ + Manager (4) LicenseHistory บันทึก</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="t5d"><label class="check-label" for="t5d">
+          <div class="check-main">Scenario 8: License Movement — พนักงาน Transfer แผนก → Return to Pool <span class="tag t-critical">Priority 0</span></div>
+          <div class="check-detail">ตรวจ: (1) AssignedTo ว่าง (2) MovementStatus="Returned to Pool" (3) LicenseHistory บันทึก</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="t5e"><label class="check-label" for="t5e">
+          <div class="check-main">Scenario 9: License Movement — Cancel → IT Admin ได้รับ Email แจ้งให้ Cancel ที่ Vendor Portal ด้วย</div>
+          <div class="check-detail">ตรวจ: (1) Status="Cancelled" (2) ExpiryAction="Cancel" (3) Email IT Admin มีชื่อ Vendor และ Software ชัดเจน</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="t6"><label class="check-label" for="t6">
+          <div class="check-main">ตรวจ LicenseHistory ว่ามี log ครบทุก action</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="t7"><label class="check-label" for="t7">
+          <div class="check-main">ตรวจ Licenses List ว่ามี RequestRef และ PurchaseRef ครบ</div>
+        </label>
+      </div>
+    </div>
+
+    <div class="subgroup">
+      <div class="subgroup-title"><span class="subgroup-icon">👥</span>UAT — ผู้ใช้งานจริงทดสอบ</div>
+      <div class="check-item">
+        <input type="checkbox" id="t8"><label class="check-label" for="t8">
+          <div class="check-main">พนักงานทดลอง submit Request Form จริง (ไม่ใช่ test account)</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="t9"><label class="check-label" for="t9">
+          <div class="check-main">Manager ทดลอง Approve และ Reject ผ่าน Email จริง</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="t10"><label class="check-label" for="t10">
+          <div class="check-main">HR/IT Admin ทดลองกรอก PO Number ผ่าน Admin Screen จริง</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="t11"><label class="check-label" for="t11">
+          <div class="check-main">รวบรวม Feedback และแก้ไขก่อน Go-Live</div>
+        </label>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- PHASE 5: Go-Live -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div class="phase-section" id="phase-5">
+  <div class="phase-header" style="background:var(--green-bg)" onclick="togglePhase(5)">
+    <div class="ph-num" style="background:var(--green)">5</div>
+    <div class="ph-info">
+      <div class="ph-name" style="color:var(--green-dk)">🚀 Go-Live &amp; ส่งมอบเอกสาร</div>
+      <div class="ph-dates">📅 31 มี.ค. · Deadline !</div>
+    </div>
+    <div class="ph-progress">
+      <div class="ph-prog-bg"><div class="ph-prog-fill" id="pp-5" style="width:0%;background:var(--green)"></div></div>
+      <div class="ph-count" id="pc-5" style="color:var(--green-dk)">0/0</div>
+    </div>
+    <span class="chevron" id="chv-5">▾</span>
+  </div>
+  <div class="phase-body collapsed" id="pb-5">
+    <div class="subgroup">
+      <div class="subgroup-title"><span class="subgroup-icon">🚀</span>Deploy &amp; Announce</div>
+      <div class="check-item">
+        <input type="checkbox" id="g1"><label class="check-label" for="g1">
+          <div class="check-main">Publish Power Apps — คลิก "Publish" ใน Power Apps Studio</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="g2"><label class="check-label" for="g2">
+          <div class="check-main">Share App ให้ผู้ใช้งานทุกกลุ่ม (พนักงาน, Manager, HR/IT Admin)</div>
+          <div class="check-detail">Share → เพิ่ม Users/Groups ตามสิทธิ์ที่กำหนดไว้</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="g3"><label class="check-label" for="g3">
+          <div class="check-main">เปิดใช้งาน Flow ทั้ง 3 (Turn On)</div>
+          <div class="check-detail">Power Automate → My Flows → ตรวจว่าทุก Flow Status = On</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="g4"><label class="check-label" for="g4">
+          <div class="check-main">ส่ง Email แจ้งทีมงานและผู้ใช้งาน: ระบบพร้อมใช้งานแล้ว</div>
+          <div class="check-detail">แนบ link Power Apps + คู่มือการใช้งาน (Work Procedure)</div>
+        </label>
+      </div>
+    </div>
+    <div class="subgroup">
+      <div class="subgroup-title"><span class="subgroup-icon">📋</span>เอกสารส่งมอบ</div>
+      <div class="check-item">
+        <input type="checkbox" id="g5"><label class="check-label" for="g5">
+          <div class="check-main">ส่งมอบ Work Procedure (WP_SoftwareLicense_Management.docx)</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="g6"><label class="check-label" for="g6">
+          <div class="check-main">ส่งมอบ Technical Guide (License_Management_Technical_Guide.docx)</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="g7"><label class="check-label" for="g7">
+          <div class="check-main">กรอก Working Committee ในเอกสาร Work Procedure ให้ครบ</div>
+        </label>
+      </div>
+      <div class="check-item">
+        <input type="checkbox" id="g8"><label class="check-label" for="g8">
+          <div class="check-main">ส่งเอกสารให้ Reviewer ตรวจสอบตามขั้นตอน</div>
+        </label>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- end .content -->
+
+<div class="toast" id="toast">✅ บันทึกแล้ว</div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────────────
+const PHASES = [
+  { id: 1, label: '🗄️ SharePoint', color: '#2B7DE9' },
+  { id: 2, label: '⚡ Flows', color: '#7C3AED' },
+  { id: 3, label: '📱 Apps', color: '#DC2626' },
+  { id: 4, label: '🧪 Testing', color: '#D97706' },
+  { id: 5, label: '🚀 Go-Live', color: '#1D9E75' },
+];
+
+// ── Init ───────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  loadState();
+  buildPhasePills();
+  updateAll();
+
+  // Attach listeners
+  document.querySelectorAll('input[type=checkbox]').forEach(cb => {
+    cb.addEventListener('change', () => {
+      const item = cb.closest('.check-item');
+      if (item) item.classList.toggle('done', cb.checked);
+      saveState();
+      updateAll();
+      showToast();
+    });
+  });
+});
+
+function buildPhasePills() {
+  const wrap = document.getElementById('phase-pills');
+  PHASES.forEach(p => {
+    const pill = document.createElement('span');
+    pill.className = 'phase-pill';
+    pill.id = 'pill-' + p.id;
+    pill.style.background = p.color + '22';
+    pill.style.color = p.color;
+    pill.style.border = '1px solid ' + p.color + '55';
+    pill.textContent = p.label + ' 0%';
+    pill.onclick = () => {
+      const el = document.getElementById('phase-' + p.id);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+    wrap.appendChild(pill);
+  });
+}
+
+function updateAll() {
+  let total = 0, done = 0;
+  PHASES.forEach(p => {
+    const pb = document.getElementById('pb-' + p.id);
+    if (!pb) return;
+    const cbs = pb.querySelectorAll('input[type=checkbox]');
+    const pDone = Array.from(cbs).filter(c => c.checked).length;
+    const pTotal = cbs.length;
+    total += pTotal;
+    done += pDone;
+    const pct = pTotal > 0 ? Math.round(pDone / pTotal * 100) : 0;
+    const fill = document.getElementById('pp-' + p.id);
+    const count = document.getElementById('pc-' + p.id);
+    if (fill) fill.style.width = pct + '%';
+    if (count) count.textContent = pDone + '/' + pTotal;
+    const pill = document.getElementById('pill-' + p.id);
+    if (pill) pill.textContent = p.label + ' ' + pct + '%';
+  });
+  const overall = total > 0 ? Math.round(done / total * 100) : 0;
+  document.getElementById('prog-bar').style.width = overall + '%';
+  document.getElementById('prog-pct').textContent = overall + '%';
+  document.getElementById('prog-sub').textContent = `${done} / ${total} tasks เสร็จแล้ว`;
+}
+
+function togglePhase(id) {
+  const body = document.getElementById('pb-' + id);
+  const chv = document.getElementById('chv-' + id);
+  if (!body) return;
+  const collapsed = body.classList.toggle('collapsed');
+  if (chv) chv.classList.toggle('open', !collapsed);
+}
+
+function saveState() {
+  const state = {};
+  document.querySelectorAll('input[type=checkbox]').forEach(cb => {
+    state[cb.id] = cb.checked;
+  });
+  try { localStorage.setItem('lic-checklist-v2', JSON.stringify(state)); } catch(e) {}
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem('lic-checklist-v2');
+    if (!raw) return;
+    const state = JSON.parse(raw);
+    document.querySelectorAll('input[type=checkbox]').forEach(cb => {
+      if (state[cb.id]) {
+        cb.checked = true;
+        const item = cb.closest('.check-item');
+        if (item) item.classList.add('done');
+      }
+    });
+  } catch(e) {}
+}
+
+function showToast() {
+  const t = document.getElementById('toast');
+  t.style.opacity = '1';
+  setTimeout(() => { t.style.opacity = '0'; }, 1500);
+}
+</script>
+</body>
+</html>

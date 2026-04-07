@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>License Management — FAQ & Knowledge Base</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#F4F3EF;--card:#fff;--border:#E2E0D8;--text:#1C1B18;--muted:#6B6A63;
+  --green:#1D9E75;--green-bg:#E1F5EE;--green-dk:#0F6E56;
+  --blue:#2B7DE9;--blue-bg:#E6F1FB;--blue-dk:#185FA5;
+  --amber:#D97706;--amber-bg:#FEF3C7;--amber-dk:#854F0B;
+  --red:#DC2626;--red-bg:#FEE2E2;--red-dk:#991B1B;
+  --purple:#7C3AED;--purple-bg:#EDE9FE;--purple-dk:#5B21B6;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:13px;padding-bottom:60px}
+.topbar{background:#1C1B18;color:#fff;padding:0 24px;display:flex;align-items:center;gap:12px;height:46px;position:sticky;top:0;z-index:100}
+.topbar-title{font-size:15px;font-weight:700}
+.topbar-title span{color:var(--green)}
+.topbar-sub{font-size:11px;color:#9CA3AF;border-left:1px solid #374151;padding-left:12px}
+
+/* Search */
+.search-bar{background:var(--card);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;gap:12px;position:sticky;top:46px;z-index:90}
+.search-input{flex:1;max-width:480px;padding:8px 14px;border:1px solid var(--border);border-radius:8px;font-size:13px;outline:none;background:#FAFAF8}
+.search-input:focus{border-color:var(--blue);background:#fff}
+.search-hint{font-size:11px;color:var(--muted)}
+.cat-filters{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}
+.cat-btn{font-size:11px;font-weight:600;padding:4px 12px;border-radius:12px;cursor:pointer;border:1px solid var(--border);background:var(--card);color:var(--muted);transition:all .15s}
+.cat-btn.active{background:var(--text);color:#fff;border-color:var(--text)}
+
+/* Layout */
+.content{max-width:860px;margin:0 auto;padding:24px}
+
+/* Category headers */
+.cat-section{margin-bottom:32px}
+.cat-header{display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-bottom:8px;border-bottom:2px solid var(--border)}
+.cat-icon{font-size:20px}
+.cat-title{font-size:16px;font-weight:700}
+.cat-count{font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;background:var(--bg);color:var(--muted);border:1px solid var(--border)}
+
+/* FAQ cards */
+.faq-card{background:var(--card);border:1px solid var(--border);border-radius:10px;margin-bottom:10px;overflow:hidden;transition:box-shadow .15s}
+.faq-card:hover{box-shadow:0 2px 12px rgba(0,0,0,.06)}
+.faq-card.hidden{display:none}
+.faq-q{padding:13px 16px;cursor:pointer;display:flex;align-items:flex-start;gap:10px;user-select:none}
+.faq-q:hover{background:#FAFAF8}
+.q-icon{font-size:14px;flex-shrink:0;margin-top:1px}
+.q-text{flex:1;font-size:13px;font-weight:600;line-height:1.5}
+.q-tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px}
+.q-tag{font-size:9px;font-weight:700;padding:1px 6px;border-radius:5px}
+.tag-decision{background:#EDE9FE;color:#5B21B6}
+.tag-why{background:#FEF3C7;color:#854F0B}
+.tag-how{background:#E1F5EE;color:#0F6E56}
+.tag-warning{background:#FEE2E2;color:#991B1B}
+.tag-p0{background:#1C1B18;color:#FCD34D}
+.chevron{color:#9CA3AF;font-size:11px;transition:transform .2s;flex-shrink:0;margin-top:3px}
+.chevron.open{transform:rotate(180deg)}
+.faq-a{display:none;padding:0 16px 16px 40px;font-size:12.5px;line-height:1.7;color:var(--text);border-top:1px solid #F4F3EF}
+.faq-a.open{display:block}
+.faq-a p{margin-bottom:10px}
+.faq-a p:last-child{margin-bottom:0}
+.faq-a strong{color:var(--text)}
+.faq-a code{font-family:monospace;font-size:11px;background:#F1F5F9;padding:1px 5px;border-radius:4px;color:#1E40AF}
+.highlight{background:var(--amber-bg);border-left:3px solid var(--amber);border-radius:0 6px 6px 0;padding:10px 14px;margin:8px 0;font-size:12px}
+.answer-tag{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;margin-right:4px;vertical-align:middle}
+.at-green{background:var(--green-bg);color:var(--green-dk)}
+.at-red{background:var(--red-bg);color:var(--red-dk)}
+.at-blue{background:var(--blue-bg);color:var(--blue-dk)}
+.at-amber{background:var(--amber-bg);color:var(--amber-dk)}
+.vs-row{display:flex;gap:12px;margin:10px 0}
+.vs-box{flex:1;border-radius:8px;padding:10px 12px;font-size:12px;line-height:1.6}
+
+/* Empty state */
+.empty-state{text-align:center;padding:40px;color:var(--muted);font-size:13px}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-title">License<span>FAQ</span></div>
+  <div class="topbar-sub">Knowledge Base — สิ่งที่ตัดสินใจและเหตุผลในการออกแบบระบบ</div>
+  <a href="index.html" style="margin-left:auto;font-size:11px;color:#9CA3AF;text-decoration:none">← กลับ Hub</a>
+</div>
+
+<div class="search-bar">
+  <input class="search-input" type="text" id="searchInput" placeholder="🔍 ค้นหาคำถาม เช่น expiry, resign, flow, sharepoint..." oninput="doSearch()">
+  <span class="search-hint" id="search-count">ทั้งหมด <strong id="total-count">0</strong> Q&A</span>
+  <div class="cat-filters">
+    <button class="cat-btn active" onclick="filterCat('all',this)">ทั้งหมด</button>
+    <button class="cat-btn" onclick="filterCat('arch',this)">🏗️ Architecture</button>
+    <button class="cat-btn" onclick="filterCat('purchase',this)">💰 Purchase</button>
+    <button class="cat-btn" onclick="filterCat('lifecycle',this)">🔁 Lifecycle</button>
+    <button class="cat-btn" onclick="filterCat('sp',this)">🗄️ SharePoint</button>
+    <button class="cat-btn" onclick="filterCat('flow',this)">⚡ Flows</button>
+    <button class="cat-btn" onclick="filterCat('apps',this)">📱 Power Apps</button>
+    <button class="cat-btn" onclick="filterCat('cut',this)">🧹 ตัดออก</button>
+  </div>
+</div>
+
+<div class="content" id="faq-content">
+
+  <!-- ═══ ARCHITECTURE ═══ -->
+  <div class="cat-section" data-cat="arch">
+    <div class="cat-header">
+      <div class="cat-icon">🏗️</div>
+      <div class="cat-title">System Architecture</div>
+      <div class="cat-count cat-arch-count"></div>
+    </div>
+
+    <div class="faq-card" data-cat="arch" data-keywords="request license flow เริ่มต้น ทำไม">
+      <div class="faq-q" onclick="toggleFaq(this)">
+        <div class="q-icon">❓</div>
+        <div class="q-text">ทำไมพนักงานต้อง Request ก่อน? ทำไมไม่ให้ HR/IT Admin สร้าง License เองได้เลย?
+          <div class="q-tags"><span class="q-tag tag-decision">Design Decision</span><span class="q-tag tag-why">Why</span></div>
+        </div>
+        <div class="chevron">▾</div>
+      </div>
+      <div class="faq-a">
+        <p>เพราะต้องการ <strong>audit trail และ approval gate</strong> ก่อนเสียเงิน ถ้า IT Admin สร้างเองได้เลย จะไม่มีหลักฐานว่าใครขอ ทำไมถึงต้องการ และ Manager อนุมัติหรือเปล่า</p>
+        <p>Flow ที่ถูกต้องคือ: <strong>Employee Request → Manager Approve → Purchase → License Assigned</strong> ทุกขั้นตอนมีคนรับผิดชอบชัดเจน</p>
+        <div class="highlight">📌 License Management (Phase 3) จะ unlock ได้ก็ต่อเมื่อผ่าน Approval และ Purchase Write-Back แล้วเท่านั้น</div>
+      </div>
+    </div>
+
+    <div class="faq-card" data-cat="arch" data-keywords="3 phase write-back concept สรุป">
+      <div class="faq-q" onclick="toggleFaq(this)">
+        <div class="q-icon">❓</div>
+        <div class="q-text">สรุป 3 Phases ของระบบคืออะไร?
+          <div class="q-tags"><span class="q-tag tag-how">How It Works</span></div>
+        </div>
+        <div class="chevron">▾</div>
+      </div>
+      <div class="faq-a">
+        <p><strong>Phase 1 — Request & Approval:</strong> พนักงานกรอก Form ใน Power Apps → Flow ส่ง Approval ให้ Manager → Manager Approve/Reject → ถ้า Approve ระบุ Payment Method (PR/PO หรือ Corporate Card)</p>
+        <p><strong>Phase 2 — Purchase + Write-Back:</strong> จัดซื้อ/การเงินดำเนินการตามช่องทาง → เสร็จแล้วต้อง Write-Back เลข Reference (PO Number หรือ CC Transaction ID) กลับมาใน SharePoint → set PurchaseStatus = "Completed"</p>
+        <p><strong>Phase 3 — License Management:</strong> Flow 2 detect Completed → แจ้ง IT Admin → IT Admin กรอก License Key + Assign ให้พนักงาน → ระบบเริ่ม Monitor Expiry รายวัน</p>
+        <div class="highlight">🔑 Key concept: <code>PurchaseStatus = "Completed"</code> คือประตูที่เปิด Phase 3 — ไม่มี Write-Back = ไม่มี License</div>
+      </div>
+    </div>
+
+    <div class="faq-card" data-cat="arch" data-keywords="stakeholder ใครทำอะไร บทบาท">
+      <div class="faq-q" onclick="toggleFaq(this)">
+        <div class="q-icon">❓</div>
+        <div class="q-text">แต่ละ Stakeholder มีบทบาทอะไรในระบบ?
+          <div class="q-tags"><span class="q-tag tag-how">How It Works</span></div>
+        </div>
+        <div class="chevron">▾</div>
+      </div>
+      <div class="faq-a">
+        <p><span class="answer-tag at-blue">พนักงาน</span> ยื่น Request ผ่าน Power Apps รับแจ้งผลอนุมัติ/ปฏิเสธ รับแจ้งเมื่อ License พร้อม</p>
+        <p><span class="answer-tag at-blue">Manager</span> Approve/Reject Request ตัดสินใจ Renew/Cancel เมื่อ License ใกล้หมด</p>
+        <p><span class="answer-tag at-green">HR/IT Admin</span> Write-Back Reference Number, Assign License Key, ดำเนินการ Movement เมื่อพนักงาน Resign/Transfer, ลงมือ Cancel/Renew ที่ Vendor Portal จริงๆ</p>
+        <p><span class="answer-tag at-amber">จัดซื้อ</span> ออก PO ติดต่อ Vendor — process ของเขาเอง ระบบเราแค่รอเลข PO กลับมา</p>
+        <p><span class="answer-tag at-amber">การเงิน</span> ชำระ Corporate Card — process ของเขาเอง ระบบเราแค่รอ CC Transaction ID กลับมา</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ PURCHASE ═══ -->
+  <div class="cat-section" data-cat="purchase">
+    <div class="cat-header">
+      <div class="cat-icon">💰</div>
+      <div class="cat-title">Purchase Flow — PR/PO & Corporate Card</div>
+      <div class="cat-count cat-purchase-count"></div>
+    </div>
+
+    <div class="faq-card" data-cat="purchase" data-keywords="จัดซื้อ การเงิน prpo corporate card หน้าที่ responsibility">
+      <div class="faq-q" onclick="toggleFaq(this)">
+        <div class="q-icon">❓</div>
+        <div class="q-text">ระบบเราต้องไปยุ่งกับ Process ของจัดซื้อหรือการเงินไหม?
+          <div class="q-tags"><span class="q-tag tag-decision">Design Decision</span></div>
+        </div>
+        <div class="chevron">▾</div>
+      </div>
+      <div class="faq-a">
+        <p><strong>ไม่ต้องยุ่งเลย</strong> Process ข้างในของจัดซื้อ (ออก PO, ติดต่อ Vendor) และการเงิน (อนุมัติ Corporate Card) เป็นหน้าที่ของเขา ระบบเราแค่:</p>
+        <div class="vs-row">
+          <div class="vs-box" style="background:var(--green-bg);border:1px solid #A7F3D0">
+            <strong style="color:var(--green-dk)">✅ สิ่งที่ระบบทำ</strong><br>
+            ส่ง Notification ว่า "Request ผ่านแล้ว ช่องทางนี้"<br>
+            รอให้คนกรอก Reference กลับมา<br>
+            Detect เมื่อ PurchaseStatus = "Completed"
+          </div>
+          <div class="vs-box" style="background:var(--red-bg);border:1px solid #FECACA">
+            <strong style="color:var(--red-dk)">❌ สิ่งที่ไม่ใช่หน้าที่เรา</strong><br>
+            Process ออก PO ของจัดซื้อ<br>
+            Process อนุมัติ Corporate Card<br>
+            จัดการ Vendor ต่างๆ
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="faq-card" data-cat="purchase" data-keywords="write-back po number cc ref id กรอกเลข">
+      <div class="faq-q" onclick="toggleFaq(this)">
+        <div class="q-icon">❓</div>
+        <div class="q-text">Write-Back คืออะไร ใครกรอก?
+          <div class="q-tags"><span class="q-tag tag-how">How It Works</span></div>
+        </div>
+        <div class="chevron">▾</div>
+      </div>
+      <div class="faq-a">
+        <p>Write-Back คือการที่ HR/IT Admin กรอก Reference Number ของการจัดซื้อกลับเข้าไปใน SharePoint หลังจากได้รับข้อมูลจากจัดซื้อ/การเงิน</p>
+        <p><strong>PR/PO path:</strong> จัดซื้อแจ้ง PO Number มาให้ → HR/IT Admin กรอก <code>PONumber</code> ใน Power Apps Admin Screen → set <code>PurchaseStatus = "Completed"</code></p>
+        <p><strong>Corporate Card path:</strong> การเงินแจ้ง Transaction ID มาให้ → HR/IT Admin กรอก <code>CCRefID</code> ใน Power Apps → set <code>PurchaseStatus = "Completed"</code></p>
+        <div class="highlight">⚠️ ใครกรอก Write-Back? <strong>HR/IT Admin</strong> เป็นคนกรอก ไม่ใช่จัดซื้อหรือการเงินเข้ามากรอกเอง (ไม่คุ้มสร้าง App แยกสำหรับ 1 field)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ LIFECYCLE ═══ -->
+  <div class="cat-section" data-cat="lifecycle">
+    <div class="cat-header">
+      <div class="cat-icon">🔁</div>
+      <div class="cat-title">License Lifecycle — Movement & Expiry</div>
+      <div class="cat-count cat-lifecycle-count"></div>
+    </div>
+
+    <div class="faq-card" data-cat="lifecycle" data-keywords="resign transfer ออกงาน โอนย้าย license หลุดลอย">
+      <div class="faq-q" onclick="toggleFaq(this)">
+        <div class="q-icon">❓</div>
+        <div class="q-text">เมื่อพนักงาน Resign หรือ Transfer แผนก ต้องทำอะไรกับ License?
+          <div class="q-tags"><span class="q-tag tag-p0">Priority 0</span><span class="q-tag tag-warning">หลุดลอย</span></div>
+        </div>
+        <div class="chevron">▾</div>
+      </div>
+      <div class="faq-a">
+        <p>IT Admin ต้องดำเนินการ <strong>ก่อนปิด AD Account</strong> พนักงาน (ถ้าปิด Account ก่อน License จะหลุดลอยทันที หาเจ้าของไม่ได้)</p>
+        <p>มี 3 Actions ให้เลือก:</p>
+        <div class="vs-row" style="flex-direction:column;gap:8px">
+          <div class="vs-box" style="background:var(--green-bg);border:1px solid #A7F3D0">
+            <strong style="color:var(--green-dk)">Transfer →</strong> โอน License ให้พนักงานคนอื่น ผล: AssignedTo เปลี่ยน ใช้งานต่อได้ทันที ไม่ต้องซื้อใหม่
+          </div>
+          <div class="vs-box" style="background:var(--blue-bg);border:1px solid #BFDBFE">
+            <strong style="color:var(--blue-dk)">Return to Pool →</strong> คืน License เข้าระบบ ยังไม่ Assign ใคร รอ Request ครั้งต่อไป
+          </div>
+          <div class="vs-box" style="background:var(--red-bg);border:1px solid #FECACA">
+            <strong style="color:var(--red-dk)">Cancel →</strong> ยกเลิก License ไม่ต้องการแล้ว IT Admin ต้องไป Cancel ที่ Vendor Portal ด้วย
+          </div>
+        </div>
+        <div class="highlight">⚠️ ลำดับที่ถูกต้อง: HR แจ้ง IT Admin → IT Admin ทำ License Movement ใน Power Apps → Flow 4 อัปเดต SharePoint + ส่ง Email → จากนั้นค่อยปิด AD Account</div>
+      </div>
+    </div>
+
+    <div class="faq-card" data-cat="lifecycle" data-keywords="expiry expired แจ้งเตือน หมดอายุ action vendor portal cancel renew">
+      <div class="faq-q" onclick="toggleFaq(this)">
+        <div class="q-icon">❓</div>
+        <div class="q-text">License หมดอายุ — ระบบแค่แจ้งเตือนพอไหม?
+          <div class="q-tags"><span class="q-tag tag-p0">Priority 0</span><span class="q-tag tag-decision">Design Decision</span></div>
+        </div>
+        <div class="chevron">▾</div>
+      </div>
+      <div class="faq-a">
+        <p><strong>ไม่พอ</strong> การแค่ "ส่ง Email แจ้งเตือน" คือ pattern ที่ผิด เพราะไม่มีคนรับผิดชอบจนถึงจุดจบ</p>
+        <p>ระบบต้องบังคับให้มีคน <strong>ตัดสินใจ</strong> (Renew/Cancel/Transfer) และ <strong>ลงมือ</strong> ที่ Vendor Portal จริงๆ:</p>
+        <p>Timeline: <span style="background:var(--amber);color:#fff;border-radius:6px;padding:1px 7px;font-size:11px">30 วัน</span> → แจ้ง + รอตัดสินใจ &nbsp; <span style="background:#F97316;color:#fff;border-radius:6px;padding:1px 7px;font-size:11px">7 วัน</span> → Escalate ถ้าไม่มี Action &nbsp; <span style="background:var(--red);color:#fff;border-radius:6px;padding:1px 7px;font-size:11px">1 วัน</span> → แจ้ง IT Admin ด่วน &nbsp; <span style="background:#991B1B;color:#fff;border-radius:6px;padding:1px 7px;font-size:11px">หมดแล้ว</span> → ส่ง Task ให้ IT Admin ยืนยัน</p>
+        <div class="highlight">ถ้าไม่ Cancel ที่ Vendor Portal = อาจถูก Auto-renew และเสียเงินทั้งที่ไม่ต้องการแล้ว</div>
+      </div>
+    </div>
+
+    <div class="faq-card" data-cat="lifecycle" data-keywords="vendor portal ใคร cancel renew อำนาจ it admin manager">
+      <div class="faq-q" onclick="toggleFaq(this)">
+        <div class="q-icon">❓</div>
+        <div class="q-text">ใครมีอำนาจเข้า Vendor Portal เพื่อ Cancel/Renew Subscription?
+          <div class="q-tags"><span class="q-tag tag-decision">Design Decision</span></div>
+        </div>
+        <div class="chevron">▾</div>
+      </div>
+      <div class="faq-a">
+        <p>ต้องแยกระหว่าง "ตัดสินใจ" กับ "ลงมือ":</p>
+        <div class="vs-row">
+          <div class="vs-box" style="background:var(--blue-bg);border:1px solid #BFDBFE">
+            <strong style="color:var(--blue-dk)">Manager — ตัดสินใจ ✅</strong><br>
+            เลือก Renew / Cancel / Transfer ใน Power Apps<br>
+            ไม่ต้องเข้า Vendor Portal
+          </div>
+          <div class="vs-box" style="background:var(--green-bg);border:1px solid #A7F3D0">
+            <strong style="color:var(--green-dk)">IT Admin — ลงมือ ✅</strong><br>
+            เข้า Vendor Portal / Billing Email บริษัท<br>
+            Cancel หรือ Renew จริงๆ แล้ว mark Done ใน Power Apps
+          </div>
+        </div>
+        <p><span class="answer-tag at-red">พนักงาน (License Owner)</span> รับทราบเท่านั้น ❌ ไม่มี access Vendor Portal เพราะ License ผูกกับ Billing Email บริษัท ไม่ใช่ Email ส่วนตัว</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ SHAREPOINT ═══ -->
+  <div class="cat-section" data-cat="sp">
+    <div class="cat-header">
+      <div class="cat-icon">🗄️</div>
+      <div class="cat-title">SharePoint — Data Model</div>
+      <div class="cat-count cat-sp-count"></div>
+    </div>
+
+    <div class="faq-card" data-cat="sp" data-keywords="expiry date software catalog licenses list เช็คที่ไหน">
+      <div class="faq-q" onclick="toggleFaq(this)">
+        <div class="q-icon">❓</div>
+        <div class="q-text">ควรเก็บ ExpiryDate ที่ SoftwareCatalog หรือ Licenses List?
+          <div class="q-tags"><span class="q-tag tag-decision">Design Decision</span><span class="q-tag tag-why">Why</span></div>
+        </div>
+        <div class="chevron">▾</div>
+      </div>
+      <div class="faq-a">
+        <p>ขึ้นอยู่กับโมเดล License ขององค์กร:</p>
+        <div class="vs-row">
+          <div class="vs-box" style="background:var(--amber-bg);border:1px solid #FDE68A">
+            <strong style="color:var(--amber-dk)">SoftwareCatalog.ExpiryDate</strong><br>
+            ใช้เมื่อเป็น <strong>Company Subscription</strong><br>
+            เช่น ซื้อ Adobe CC ทั้งองค์กร หมดพร้อมกันหมดทุกคน<br>
+            → Flow เช็คที่ Catalog ส่ง 1 Email ต่อ Software
+          </div>
+          <div class="vs-box" style="background:var(--blue-bg);border:1px solid #BFDBFE">
+            <strong style="color:var(--blue-dk)">Licenses.ExpiryDate</strong><br>
+            ใช้เมื่อเป็น <strong>Per-Seat License</strong><br>
+            เช่น พนักงาน A key หมด 15 มี.ค., B หมด 30 มิ.ย.<br>
+            → Flow เช็คทีละ License รายคน
+          </div>
+        </div>
+        <div class="highlight">📌 ในทางปฏิบัติองค์กรส่วนใหญ่มีทั้งสองแบบผสมกัน เช่น Microsoft 365 = subscription ทั้งองค์กร, Adobe = per-seat key</div>
+      </div>
+    </div>
+
+    <div class="faq-card" data-cat="sp" data-keywords="4 lists sharepoint softwarecatalog approvalrequests licenses licensehistory">
+      <div class="faq-q" onclick="toggleFaq(this)">
+        <div class="q-icon">❓</div>
+        <div class="q-text">4 SharePoint Lists แต่ละ List มีหน้าที่อะไร?
+          <div class="q-tags"><span class="q-tag tag-how">How It Works</span></div>
+        </div>
+        <div class="chevron">▾</div>
+      </div>
+      <div class="faq-a">
+        <p><span class="answer-tag at-blue">SoftwareCatalog</span> Master data รายการซอฟต์แวร์ทั้งหมดที่บริษัทใช้ — Vendor, Category ไม่เปลี่ยนบ่อย</p>
+        <p><span class="answer-tag at-amber">ApprovalRequests</span> คำขอ License ทุกรายการ — มี PaymentMethod, PONumber/CCRefID, PurchaseStatus เป็น "ประตู" เปิด Phase 3</p>
+        <p><span class="answer-tag at-green">Licenses</span> License ที่ assign ให้พนักงานจริงๆ — LicenseKey, AssignedTo, ExpiryDate, MovementStatus, ExpiryActionStatus</p>
+        <p><span class="answer-tag" style="background:var(--purple-bg);color:var(--purple-dk)">LicenseHistory</span> Log ทุก action อัตโนมัติ — Flow เขียนให้ ใช้เพื่อ audit trail</p>
+      </div>
+    </div>
+
+    <div class="faq-card" data-cat="sp" data-keywords="purchasestatus completed trigger ทำงาน unlock">
+      <div class="faq-q" onclick="toggleFaq(this)">
+        <div class="q-icon">❓</div>
+        <div class="q-text">PurchaseStatus มี Choices อะไรบ้าง และสำคัญยังไง?
+          <div class="q-tags"><span class="q-tag tag-warning">Critical Field</span></div>
+        </div>
+        <div class="chevron">▾</div>
+      </div>
+      <div class="faq-a">
+        <p>Choices: <code>Pending</code> → <code>In Process</code> → <code>Completed</code> → <code>Cancelled</code></p>
+        <p><strong>Pending</strong> — สร้างตอน Submit Request (ยังรอ Approve)</p>
+        <p><strong>In Process</strong> — Manager Approve แล้ว รอ Purchase ดำเนินการ</p>
+        <p><strong>Completed</strong> — HR/IT Admin กรอก Write-Back เสร็จแล้ว <span class="answer-tag at-red">⚡ Trigger Flow 2 ทันที</span></p>
+        <p><strong>Cancelled</strong> — Request ถูก Reject หรือยกเลิก</p>
+        <div class="highlight">🔑 <code>PurchaseStatus = "Completed"</code> คือ trigger ที่ Flow 2 คอยดูอยู่ เมื่อเปลี่ยนเป็น Completed → Flow 2 ทำงาน → แจ้ง IT Admin ให้ Assign License</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ FLOWS ═══ -->
+  <div class="cat-section" data-cat="flow">
+    <div class="cat-header">
+      <div class="cat-icon">⚡</div>
+      <div class="cat-title">Power Automate Flows</div>
+      <div class="cat-count cat-flow-count"></div>
+    </div>
+
+    <div class="faq-card" data-cat="flow" data-keywords="4 flows สรุป flow ทำอะไร">
+      <div class="faq-q" onclick="toggleFaq(this)">
+        <div class="q-icon">❓</div>
+        <div class="q-text">มี 4 Flows อะไรบ้าง แต่ละ Flow ทำอะไร?
+          <div class="q-tags"><span class="q-tag tag-how">How It Works</span></div>
+        </div>
+        <div class="chevron">▾</div>
+      </div>
+      <div class="faq-a">
+        <p><strong>Flow 1 — Request & Approval</strong> (PowerApps Trigger): รับ Request → บันทึก SharePoint → ส่ง Approval ให้ Manager → Approve/Reject → Route ตาม PaymentMethod</p>
+        <p><strong>Flow 2 — Purchase Complete Trigger</strong> (SP Item Modified): คอยดู PurchaseStatus — เมื่อ = "Completed" → แจ้ง IT Admin ให้ Assign License + บันทึก LicenseHistory</p>
+        <p><strong>Flow 3 — Expiry Action Flow</strong> (Recurrence ทุกวัน 08:00): ตรวจ License ที่ Active → 30 วัน/7 วัน/1 วัน/หมดแล้ว → บังคับให้มีคนรับผิดชอบจนถึง "Done"</p>
+        <p><strong>Flow 4 — License Movement</strong> (PowerApps Trigger): รับ Action จาก IT Admin → Transfer/Return to Pool/Cancel → อัปเดต SharePoint + Email + LicenseHistory</p>
+      </div>
+    </div>
+
+    <div class="faq-card" data-cat="flow" data-keywords="flow 3 expiry แค่แจ้งเตือน action required done">
+      <div class="faq-q" onclick="toggleFaq(this)">
+        <div class="q-icon">❓</div>
+        <div class="q-text">Flow 3 ต่างจาก "แค่แจ้งเตือนธรรมดา" ยังไง?
+          <div class="q-tags"><span class="q-tag tag-p0">Priority 0</span><span class="q-tag tag-decision">Design Decision</span></div>
+        </div>
+        <div class="chevron">▾</div>
+      </div>
+      <div class="faq-a">
+        <p>Flow 3 ไม่ใช่แค่ส่ง Email — มันบังคับให้มีคน <strong>ตัดสินใจและลงมือ</strong> จนกว่าจะ mark "Done":</p>
+        <p>1. Set <code>ExpiryActionStatus = "Pending Decision"</code> → แสดงขึ้นใน Power Apps ให้ Manager/IT Admin มาเลือก</p>
+        <p>2. ถ้าไม่มีใค Action ใน 7 วัน → Escalate ส่งซ้ำ</p>
+        <p>3. IT Admin ลงมือที่ Vendor Portal → กดปุ่ม "Done" ใน Power Apps → <code>ExpiryActionStatus = "Done"</code></p>
+        <div class="highlight">Pattern ที่ผิด: ส่ง Email แจ้งเตือน → จบ (ไม่รู้ว่าใครทำอะไรไปบ้าง)<br>Pattern ที่ถูก: แจ้ง → รอ Decision → รอ Action → ยืนยัน Done (มี audit trail ทุกขั้น)</div>
+      </div>
+    </div>
+
+    <div class="faq-card" data-cat="flow" data-keywords="filter expiry action done กัน loop ซ้ำ">
+      <div class="faq-q" onclick="toggleFaq(this)">
+        <div class="q-icon">❓</div>
+        <div class="q-text">Flow 3 รันทุกวัน จะแจ้งเตือนซ้ำทุกวันไหม?
+          <div class="q-tags"><span class="q-tag tag-how">How It Works</span></div>
+        </div>
+        <div class="chevron">▾</div>
+      </div>
+      <div class="faq-a">
+        <p>ไม่ เพราะ Filter Query ใน Step 1 มีเงื่อนไข: <code>Status eq 'Active' and ExpiryActionStatus ne 'Done'</code></p>
+        <p>พอ IT Admin mark Done แล้ว → License นั้นจะไม่ถูก process อีก ส่วนการแจ้งเตือนซ้ำจะเกิดเฉพาะตาม threshold ที่กำหนด (30 วัน, 7 วัน, 1 วัน) ไม่ใช่ทุกวัน</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ POWER APPS ═══ -->
+  <div class="cat-section" data-cat="apps">
+    <div class="cat-header">
+      <div class="cat-icon">📱</div>
+      <div class="cat-title">Power Apps</div>
+      <div class="cat-count cat-apps-count"></div>
+    </div>
+
+    <div class="faq-card" data-cat="apps" data-keywords="app แยก จัดซื้อ การเงิน procurement finance ทำไมไม่">
+      <div class="faq-q" onclick="toggleFaq(this)">
+        <div class="q-icon">❓</div>
+        <div class="q-text">ทำไมไม่สร้าง Power Apps แยกสำหรับจัดซื้อและการเงิน?
+          <div class="q-tags"><span class="q-tag tag-cut">ตัดออก</span><span class="q-tag tag-why">Why</span></div>
+        </div>
+        <div class="chevron">▾</div>
+      </div>
+      <div class="faq-a">
+        <p>เพราะจัดซื้อและการเงินแค่ต้องกรอก Reference Number <strong>1 field</strong> เท่านั้น การสร้าง App แยกทั้งหมดสำหรับ 1 field เป็น overkill และเสียเวลา 1–2 วัน</p>
+        <p>วิธีที่ดีกว่า: เพิ่ม <strong>Write-Back Section เล็กๆ ในหน้า Admin เดิม</strong> ให้ HR/IT Admin รับข้อมูลจากจัดซื้อ/การเงิน แล้วกรอกเอง</p>
+      </div>
+    </div>
+
+    <div class="faq-card" data-cat="apps" data-keywords="3 screens หน้าจอ dashboard request admin">
+      <div class="faq-q" onclick="toggleFaq(this)">
+        <div class="q-icon">❓</div>
+        <div class="q-text">3 Screens ใน Power Apps ทำอะไรบ้าง?
+          <div class="q-tags"><span class="q-tag tag-how">How It Works</span></div>
+        </div>
+        <div class="chevron">▾</div>
+      </div>
+      <div class="faq-a">
+        <p><strong>Screen 1 — Request Form</strong> (พนักงานใช้): กรอกชื่อ Software, จำนวน, เหตุผล, เลือก PaymentMethod → Submit → Trigger Flow 1</p>
+        <p><strong>Screen 2 — Dashboard</strong> (ทุกคนดูได้): ภาพรวม Active Licenses, Expiry ใกล้หมด, Pending Purchases counter (รอ Write-Back)</p>
+        <p><strong>Screen 3 — Admin</strong> (HR/IT Admin): Write-Back Section, Expiry Decision Panel, License Movement Panel, License CRUD</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ REMOVED ═══ -->
+  <div class="cat-section" data-cat="cut">
+    <div class="cat-header">
+      <div class="cat-icon">🧹</div>
+      <div class="cat-title">สิ่งที่ตัดออก และเหตุผล</div>
+      <div class="cat-count cat-cut-count"></div>
+    </div>
+
+    <div class="faq-card" data-cat="cut" data-keywords="power bi ตัดออก mvp scope creep">
+      <div class="faq-q" onclick="toggleFaq(this)">
+        <div class="q-icon">❓</div>
+        <div class="q-text">ทำไมไม่ทำ Power BI Dashboard ใน MVP?
+          <div class="q-tags"><span class="q-tag tag-cut">ตัดออก</span></div>
+        </div>
+        <div class="chevron">▾</div>
+      </div>
+      <div class="faq-a">
+        <p>เพราะ Power BI ต้องการ data ที่สะสมมาก่อนถึงจะมีประโยชน์ ถ้าระบบยังไม่ได้ใช้งาน data ก็ยังไม่มี</p>
+        <p>ลำดับความสำคัญ: <strong>ทำให้ระบบทำงานได้ก่อน → เก็บ data → ค่อยทำ BI ทีหลัง</strong> ทำ Power BI ตอนนี้คือ scope creep ที่ทำให้ไม่เสร็จทัน 31 มีนาคม</p>
+      </div>
+    </div>
+
+    <div class="faq-card" data-cat="cut" data-keywords="multi-level approval หลายชั้น reviewer approver ตัดออก">
+      <div class="faq-q" onclick="toggleFaq(this)">
+        <div class="q-icon">❓</div>
+        <div class="q-text">ทำไมไม่ทำ Multi-Level Approval?
+          <div class="q-tags"><span class="q-tag tag-cut">ตัดออก</span></div>
+        </div>
+        <div class="chevron">▾</div>
+      </div>
+      <div class="faq-a">
+        <p>Multi-Level (Reviewer → Approver → หัวหน้า) ทำให้ Flow ซับซ้อนมาก, test ยาก, และถ้า Flow เสียหายจะหาสาเหตุได้ยากมาก</p>
+        <p>สำหรับ MVP ให้ <strong>Manager คนเดียว Approve</strong> ก่อน ถ้าองค์กรต้องการ Multi-Level จริงๆ ค่อย add ทีหลังหลัง Go-Live</p>
+      </div>
+    </div>
+
+    <div class="faq-card" data-cat="cut" data-keywords="flow 4 5 เดิม notification แยก ตัดออก">
+      <div class="faq-q" onclick="toggleFaq(this)">
+        <div class="q-icon">❓</div>
+        <div class="q-text">Flow 4 และ 5 เดิม (v1) คืออะไร ทำไมตัดออก?
+          <div class="q-tags"><span class="q-tag tag-cut">ตัดออก</span></div>
+        </div>
+        <div class="chevron">▾</div>
+      </div>
+      <div class="faq-a">
+        <p>Flow 4 เดิม = "Request Notification" (แยกออกมาส่ง Email แจ้งว่า Request ผ่าน)<br>Flow 5 เดิม = "Route Notification" (แยกออกมาบอกว่าไปทาง PR/PO หรือ Corporate Card)</p>
+        <p>ทั้งสองนี้ควรเป็น <strong>branch ใน Flow 1</strong> อยู่แล้ว ไม่ควรแยก Flow ออกมา การแยกทำให้ debug ยาก dependency ซับซ้อน และไม่มีเหตุผลที่ดีพอ</p>
+        <p>Flow 4 ใหม่ = License Movement (Priority 0 ของจริง) แทนที่ของเดิม</p>
+      </div>
+    </div>
+
+    <div class="faq-card" data-cat="cut" data-keywords="html email template สวยงาม เลื่อน">
+      <div class="faq-q" onclick="toggleFaq(this)">
+        <div class="q-icon">❓</div>
+        <div class="q-text">HTML Email Template สวยงาม ทำตอนไหน?
+          <div class="q-tags"><span class="q-tag tag-cut">เลื่อนออกไป</span></div>
+        </div>
+        <div class="chevron">▾</div>
+      </div>
+      <div class="faq-a">
+        <p>เลื่อนออกไปหลัง Go-Live เพราะ plain text Email ทำงานได้ครบฟังก์ชัน การออกแบบ HTML Email ใช้เวลาและไม่ใช่ blocker สำหรับการทำงานของระบบ</p>
+        <p>ทำ HTML Email ใน Sprint 2 หรือหลัง UAT ผ่านแล้ว</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="empty-state" id="empty-state" style="display:none">
+    🔍 ไม่พบ Q&A ที่ตรงกับคำค้นหา — ลองใช้คำอื่น
+  </div>
+
+</div><!-- /content -->
+
+<script>
+const allCards = document.querySelectorAll('.faq-card');
+let currentCat = 'all';
+
+// Count per category
+function updateCounts() {
+  const cats = ['arch','purchase','lifecycle','sp','flow','apps','cut'];
+  cats.forEach(c => {
+    const n = document.querySelectorAll(`.faq-card[data-cat="${c}"]`).length;
+    const el = document.querySelector(`.cat-${c}-count`);
+    if(el) el.textContent = n + ' Q&A';
+  });
+  document.getElementById('total-count').textContent = allCards.length;
+}
+
+function toggleFaq(qEl) {
+  const card = qEl.closest('.faq-card');
+  const ans = card.querySelector('.faq-a');
+  const chv = qEl.querySelector('.chevron');
+  const isOpen = ans.classList.contains('open');
+  // Close all
+  document.querySelectorAll('.faq-a.open').forEach(a => a.classList.remove('open'));
+  document.querySelectorAll('.chevron.open').forEach(c => c.classList.remove('open'));
+  if (!isOpen) {
+    ans.classList.add('open');
+    chv.classList.add('open');
+  }
+}
+
+function doSearch() {
+  const q = document.getElementById('searchInput').value.toLowerCase().trim();
+  let visible = 0;
+  allCards.forEach(card => {
+    const catOk = currentCat === 'all' || card.dataset.cat === currentCat;
+    const kw = (card.dataset.keywords || '').toLowerCase();
+    const txt = card.textContent.toLowerCase();
+    const match = !q || kw.includes(q) || txt.includes(q);
+    const show = catOk && match;
+    card.classList.toggle('hidden', !show);
+    if (show) visible++;
+  });
+  // Show/hide category headers
+  document.querySelectorAll('.cat-section').forEach(sec => {
+    const cat = sec.dataset.cat;
+    const hasVisible = [...sec.querySelectorAll('.faq-card')].some(c => !c.classList.contains('hidden'));
+    sec.style.display = (currentCat === 'all' || cat === currentCat) && hasVisible ? '' : 'none';
+  });
+  document.getElementById('empty-state').style.display = visible === 0 ? 'block' : 'none';
+}
+
+function filterCat(cat, btn) {
+  currentCat = cat;
+  document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  doSearch();
+}
+
+updateCounts();
+doSearch();
+</script>
+</body>
+</html>

@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>License Management — Project Timeline</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #F4F3EF; padding: 24px; color: #1C1B18; font-size: 13px; }
+.page { max-width: 1100px; margin: 0 auto; }
+
+/* Header */
+.header { margin-bottom: 20px; }
+h1 { font-size: 22px; font-weight: 700; color: #0F6E56; }
+.subtitle { font-size: 12px; color: #6B6A63; margin-top: 3px; }
+
+/* Stats */
+.stats { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+.stat-card { background: #fff; border: 1px solid #E2E0D8; border-radius: 10px; padding: 12px 18px; flex: 1; min-width: 120px; text-align: center; }
+.stat-num { font-size: 26px; font-weight: 700; line-height: 1; }
+.stat-label { font-size: 11px; color: #6B6A63; margin-top: 3px; }
+.stat-deadline { background: #FCEBEB; border-color: #F0997B; }
+.stat-deadline .stat-num { color: #A32D2D; }
+.stat-days .stat-num { color: #1D9E75; }
+.stat-tasks .stat-num { color: #534AB7; }
+.stat-flows .stat-num { color: #185FA5; }
+
+/* Gantt Chart */
+.gantt-card { background: #fff; border: 1px solid #E2E0D8; border-radius: 12px; overflow: hidden; margin-bottom: 20px; }
+.gantt-title { padding: 12px 16px; font-size: 14px; font-weight: 600; background: #F0EFE9; border-bottom: 1px solid #E2E0D8; color: #444; display: flex; align-items: center; gap: 8px; }
+.gantt-scroll { overflow-x: auto; }
+table.gantt { border-collapse: collapse; width: 100%; min-width: 860px; }
+.gantt th, .gantt td { border-right: 1px solid #E8E7E1; }
+.gantt tr { border-bottom: 1px solid #F0EFE9; }
+
+/* Column widths */
+.col-label { width: 220px; min-width: 220px; }
+.col-day { width: 62px; min-width: 62px; text-align: center; }
+
+/* Header row: month label */
+.gantt .row-month th { background: #1D9E75; color: white; font-size: 12px; font-weight: 600; padding: 6px 4px; text-align: center; }
+.gantt .row-month .lh { background: #0F6E56; text-align: left; padding: 6px 12px; }
+
+/* Header row: date numbers */
+.gantt .row-date th { background: #F0EFE9; font-size: 11px; font-weight: 600; color: #6B6A63; padding: 5px 4px; text-align: center; }
+.gantt .row-date .lh { background: #F0EFE9; font-size: 11px; color: #888; padding: 5px 10px; text-align: left; }
+.gantt .row-date .weekend { background: #E8E7E1; color: #A8A79F; }
+.gantt .row-date .today { background: #E1F5EE; color: #0F6E56; font-weight: 700; }
+.gantt .row-date .deadline { background: #FCEBEB; color: #A32D2D; font-weight: 700; }
+
+/* Day-of-week row */
+.gantt .row-dow th { background: #F7F6F2; font-size: 10px; color: #A8A79F; padding: 3px 4px; text-align: center; }
+.gantt .row-dow .lh { background: #F7F6F2; }
+.gantt .row-dow .weekend { background: #EDECE6; color: #C0BFB8; }
+.gantt .row-dow .today { background: #E8F5EE; }
+.gantt .row-dow .deadline { background: #FBE9E7; }
+
+/* Task rows */
+.gantt .task-row td { padding: 0; height: 44px; }
+.gantt .task-row .task-label { padding: 0 12px; vertical-align: middle; }
+.gantt .task-row .task-label-inner { display: flex; align-items: center; gap: 8px; }
+.task-badge { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.task-name { font-size: 12px; font-weight: 500; color: #1C1B18; line-height: 1.3; }
+.task-dept { font-size: 10px; color: #888; }
+.gantt .task-row .day-cell { position: relative; }
+.gantt .task-row .weekend-bg { background: #F7F6F2; }
+.gantt .task-row .deadline-bg { background: #FFF5F3; }
+
+/* Gantt bars */
+.bar { position: absolute; inset: 6px 2px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 600; color: white; letter-spacing: .3px; text-shadow: 0 1px 2px rgba(0,0,0,.2); transition: opacity .15s; cursor: default; }
+.bar:hover { opacity: .85; }
+.bar-sp     { background: linear-gradient(135deg, #1565C0, #1976D2); }
+.bar-flow   { background: linear-gradient(135deg, #0F6E56, #1D9E75); }
+.bar-app    { background: linear-gradient(135deg, #534AB7, #6B63D4); }
+.bar-perm   { background: linear-gradient(135deg, #BF360C, #E64A19); }
+.bar-test   { background: linear-gradient(135deg, #A32D2D, #C62828); }
+.bar-new    { background: linear-gradient(135deg, #17A589, #1ABC9C); }
+
+/* Phase separator rows */
+.gantt .phase-row td { background: #F7F6F2; padding: 3px 12px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: #888; border-bottom: none; height: auto; }
+
+/* Milestone dot */
+.milestone { position: absolute; inset: auto; bottom: 4px; left: 50%; transform: translateX(-50%); width: 8px; height: 8px; border-radius: 50%; background: #A32D2D; border: 2px solid white; box-shadow: 0 0 0 1px #A32D2D; }
+
+/* Phase progress bars */
+.phases-card { background: #fff; border: 1px solid #E2E0D8; border-radius: 12px; padding: 16px; margin-bottom: 20px; }
+.phases-title { font-size: 14px; font-weight: 600; color: #444; margin-bottom: 12px; }
+.phase-row2 { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.phase-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+.phase-name { font-size: 12px; font-weight: 500; width: 220px; flex-shrink: 0; color: #1C1B18; }
+.phase-dates { font-size: 11px; color: #888; width: 130px; flex-shrink: 0; }
+.phase-bar-bg { flex: 1; height: 8px; background: #F0EFE9; border-radius: 4px; overflow: hidden; }
+.phase-bar-fill { height: 100%; border-radius: 4px; }
+.phase-tasks { font-size: 11px; color: #888; width: 60px; text-align: right; flex-shrink: 0; }
+
+/* Task table */
+.task-table-card { background: #fff; border: 1px solid #E2E0D8; border-radius: 12px; overflow: hidden; margin-bottom: 16px; }
+.task-table-title { padding: 12px 16px; font-size: 14px; font-weight: 600; background: #F0EFE9; border-bottom: 1px solid #E2E0D8; color: #444; }
+table.task-detail { width: 100%; border-collapse: collapse; }
+table.task-detail th { background: #F0EFE9; font-size: 11px; font-weight: 600; color: #888; padding: 7px 14px; text-align: left; border-bottom: 1px solid #E2E0D8; letter-spacing: .3px; text-transform: uppercase; }
+table.task-detail td { padding: 9px 14px; font-size: 12px; border-bottom: 1px solid #F0EFE9; vertical-align: top; }
+table.task-detail tr:last-child td { border-bottom: none; }
+table.task-detail tr:hover td { background: #FAFAF8; }
+.tag { display: inline-block; font-size: 10px; padding: 2px 7px; border-radius: 4px; font-weight: 500; white-space: nowrap; }
+.tag-sp   { background: #DBEAFE; color: #1D4ED8; }
+.tag-flow { background: #D1FAE5; color: #065F46; }
+.tag-new  { background: #CCFBF1; color: #0F766E; }
+.tag-app  { background: #EDE9FE; color: #5B21B6; }
+.tag-perm { background: #FFEDD5; color: #9A3412; }
+.tag-test { background: #FEE2E2; color: #991B1B; }
+.status-todo { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: #888; }
+.status-dot { width: 7px; height: 7px; border-radius: 50%; }
+
+/* Risk box */
+.risk-card { background: #FAEEDA; border: 1px solid #FAC775; border-radius: 10px; padding: 14px 16px; margin-bottom: 16px; }
+.risk-title { font-size: 13px; font-weight: 600; color: #854F0B; margin-bottom: 8px; }
+.risk-row { display: flex; gap: 8px; margin-bottom: 5px; align-items: flex-start; font-size: 12px; color: #854F0B; }
+.risk-icon { flex-shrink: 0; }
+
+.footer-note { font-size: 11px; color: #A8A79F; text-align: right; }
+
+@media print {
+  body { background: white; padding: 12px; }
+  .gantt-card, .phases-card, .task-table-card { break-inside: avoid; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Header -->
+  <div class="header">
+    <h1>📅 License Management System — Project Timeline</h1>
+    <p class="subtitle">HRIS · Power Platform · วันนี้: 19 มีนาคม 2026 · Deadline: 31 มีนาคม 2026</p>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat-card stat-deadline">
+      <div class="stat-num">12</div>
+      <div class="stat-label">วันที่เหลือ</div>
+    </div>
+    <div class="stat-card stat-days">
+      <div class="stat-num">9</div>
+      <div class="stat-label">วันทำการ</div>
+    </div>
+    <div class="stat-card stat-tasks">
+      <div class="stat-num">5</div>
+      <div class="stat-label">Phases</div>
+    </div>
+    <div class="stat-card stat-flows">
+      <div class="stat-num">5</div>
+      <div class="stat-label">Flows (3 เดิม + 2 ใหม่)</div>
+    </div>
+    <div class="stat-card" style="border-color:#AFA9EC;background:#EEEDFE;">
+      <div class="stat-num" style="color:#534AB7;">3</div>
+      <div class="stat-label" style="color:#534AB7;">Power Apps Screens</div>
+    </div>
+  </div>
+
+  <!-- Gantt Chart -->
+  <div class="gantt-card">
+    <div class="gantt-title">📊 Gantt Chart — มีนาคม 2026</div>
+    <div class="gantt-scroll">
+    <table class="gantt">
+      <!-- Row: Month -->
+      <tr class="row-month">
+        <th class="lh col-label">Task</th>
+        <th colspan="13" class="col-day">มีนาคม 2026</th>
+      </tr>
+      <!-- Row: Day of week -->
+      <tr class="row-dow">
+        <th class="lh col-label"></th>
+        <th class="col-day today">พฤ</th>
+        <th class="col-day">ศ</th>
+        <th class="col-day weekend">ส</th>
+        <th class="col-day weekend">อา</th>
+        <th class="col-day">จ</th>
+        <th class="col-day">อ</th>
+        <th class="col-day">พ</th>
+        <th class="col-day">พฤ</th>
+        <th class="col-day">ศ</th>
+        <th class="col-day weekend">ส</th>
+        <th class="col-day weekend">อา</th>
+        <th class="col-day">จ</th>
+        <th class="col-day deadline">อ ⚑</th>
+      </tr>
+      <!-- Row: Date numbers -->
+      <tr class="row-date">
+        <th class="lh col-label">วันที่</th>
+        <th class="col-day today">19</th>
+        <th class="col-day">20</th>
+        <th class="col-day weekend">21</th>
+        <th class="col-day weekend">22</th>
+        <th class="col-day">23</th>
+        <th class="col-day">24</th>
+        <th class="col-day">25</th>
+        <th class="col-day">26</th>
+        <th class="col-day">27</th>
+        <th class="col-day weekend">28</th>
+        <th class="col-day weekend">29</th>
+        <th class="col-day">30</th>
+        <th class="col-day deadline">31</th>
+      </tr>
+
+      <!-- ── Phase 1: SharePoint ── -->
+      <tr class="phase-row">
+        <td colspan="14" style="background:#EBF5FB;padding:4px 12px;font-size:10px;font-weight:700;color:#185FA5;text-transform:uppercase;letter-spacing:.5px;border-bottom:none;">
+          📋 Phase 1 — SharePoint Lists
+        </td>
+      </tr>
+
+      <!-- Task 1: SharePoint Lists -->
+      <tr class="task-row">
+        <td class="task-label col-label">
+          <div class="task-label-inner">
+            <div class="task-badge" style="background:#1565C0;"></div>
+            <div>
+              <div class="task-name">Update SharePoint Lists</div>
+              <div class="task-dept">IT Admin · 4 Lists ให้ตรง spec</div>
+            </div>
+          </div>
+        </td>
+        <!-- 19 -->
+        <td class="day-cell" style="position:relative;">
+          <div class="bar bar-sp" style="right:0;border-radius:4px 0 0 4px;">SP</div>
+        </td>
+        <!-- 20 -->
+        <td class="day-cell" style="position:relative;">
+          <div class="bar bar-sp" style="left:0;border-radius:0 4px 4px 0;"></div>
+        </td>
+        <!-- 21 sat --> <td class="weekend-bg"></td>
+        <!-- 22 sun --> <td class="weekend-bg"></td>
+        <!-- 23-31: empty -->
+        <td></td><td></td><td></td><td></td><td></td>
+        <td class="weekend-bg"></td><td class="weekend-bg"></td>
+        <td></td><td class="deadline-bg"></td>
+      </tr>
+
+      <!-- Task 2: Sample Data -->
+      <tr class="task-row">
+        <td class="task-label col-label">
+          <div class="task-label-inner">
+            <div class="task-badge" style="background:#1565C0;"></div>
+            <div>
+              <div class="task-name">เพิ่ม Sample Data + Test Lookup</div>
+              <div class="task-dept">IT Admin · ทดสอบ Lookup ระหว่าง Lists</div>
+            </div>
+          </div>
+        </td>
+        <td></td>
+        <!-- 20 -->
+        <td class="day-cell" style="position:relative;">
+          <div class="bar bar-sp">Test</div>
+        </td>
+        <td class="weekend-bg"></td><td class="weekend-bg"></td>
+        <td></td><td></td><td></td><td></td><td></td>
+        <td class="weekend-bg"></td><td class="weekend-bg"></td>
+        <td></td><td class="deadline-bg"></td>
+      </tr>
+
+      <!-- ── Phase 2: Power Automate ── -->
+      <tr class="phase-row">
+        <td colspan="14" style="background:#E8F8F2;padding:4px 12px;font-size:10px;font-weight:700;color:#0F6E56;text-transform:uppercase;letter-spacing:.5px;border-bottom:none;">
+          ⚡ Phase 2 — Power Automate Flows
+        </td>
+      </tr>
+
+      <!-- Task 3: Flow 1 -->
+      <tr class="task-row">
+        <td class="task-label col-label">
+          <div class="task-label-inner">
+            <div class="task-badge" style="background:#1D9E75;"></div>
+            <div>
+              <div class="task-name">Flow 1 — Expiry Notification</div>
+              <div class="task-dept">Scheduled · แจ้งเตือน 30/14/7 วัน</div>
+            </div>
+          </div>
+        </td>
+        <td></td><td></td>
+        <td class="weekend-bg"></td><td class="weekend-bg"></td>
+        <!-- 23 -->
+        <td class="day-cell" style="position:relative;">
+          <div class="bar bar-flow">F1</div>
+        </td>
+        <td></td><td></td><td></td><td></td>
+        <td class="weekend-bg"></td><td class="weekend-bg"></td>
+        <td></td><td class="deadline-bg"></td>
+      </tr>
+
+      <!-- Task 4: Flow 2 -->
+      <tr class="task-row">
+        <td class="task-label col-label">
+          <div class="task-label-inner">
+            <div class="task-badge" style="background:#1D9E75;"></div>
+            <div>
+              <div class="task-name">Flow 2 — Approval Renew</div>
+              <div class="task-dept">Automated · ApprovalRequests trigger</div>
+            </div>
+          </div>
+        </td>
+        <td></td><td></td>
+        <td class="weekend-bg"></td><td class="weekend-bg"></td>
+        <td></td>
+        <!-- 24 -->
+        <td class="day-cell" style="position:relative;">
+          <div class="bar bar-flow">F2</div>
+        </td>
+        <td></td><td></td><td></td>
+        <td class="weekend-bg"></td><td class="weekend-bg"></td>
+        <td></td><td class="deadline-bg"></td>
+      </tr>
+
+      <!-- Task 5: Flow 3 -->
+      <tr class="task-row">
+        <td class="task-label col-label">
+          <div class="task-label-inner">
+            <div class="task-badge" style="background:#1D9E75;"></div>
+            <div>
+              <div class="task-name">Flow 3 — Resign / Transfer / Convert</div>
+              <div class="task-dept">PowerApps trigger · 3 action types</div>
+            </div>
+          </div>
+        </td>
+        <td></td><td></td>
+        <td class="weekend-bg"></td><td class="weekend-bg"></td>
+        <td></td><td></td>
+        <!-- 25 -->
+        <td class="day-cell" style="position:relative;">
+          <div class="bar bar-flow">F3</div>
+        </td>
+        <td></td><td></td>
+        <td class="weekend-bg"></td><td class="weekend-bg"></td>
+        <td></td><td class="deadline-bg"></td>
+      </tr>
+
+      <!-- Task 6: Flow 4+5 NEW -->
+      <tr class="task-row">
+        <td class="task-label col-label">
+          <div class="task-label-inner">
+            <div class="task-badge" style="background:#17A589;"></div>
+            <div>
+              <div class="task-name">Flow 4+5 — New Route Flows ✨</div>
+              <div class="task-dept">ใหม่ · Request Notification + Route Select</div>
+            </div>
+          </div>
+        </td>
+        <td></td><td></td>
+        <td class="weekend-bg"></td><td class="weekend-bg"></td>
+        <td></td><td></td><td></td>
+        <!-- 26 -->
+        <td class="day-cell" style="position:relative;">
+          <div class="bar bar-new">F4+5</div>
+        </td>
+        <td></td>
+        <td class="weekend-bg"></td><td class="weekend-bg"></td>
+        <td></td><td class="deadline-bg"></td>
+      </tr>
+
+      <!-- ── Phase 3: Power Apps ── -->
+      <tr class="phase-row">
+        <td colspan="14" style="background:#F0EEFE;padding:4px 12px;font-size:10px;font-weight:700;color:#534AB7;text-transform:uppercase;letter-spacing:.5px;border-bottom:none;">
+          📱 Phase 3 — Power Apps UI
+        </td>
+      </tr>
+
+      <!-- Task 7: Dashboard + All Licenses -->
+      <tr class="task-row">
+        <td class="task-label col-label">
+          <div class="task-label-inner">
+            <div class="task-badge" style="background:#534AB7;"></div>
+            <div>
+              <div class="task-name">Dashboard + All Licenses Screen</div>
+              <div class="task-dept">Power Apps · KPI Cards, Gallery, Search</div>
+            </div>
+          </div>
+        </td>
+        <td></td><td></td>
+        <td class="weekend-bg"></td><td class="weekend-bg"></td>
+        <td></td><td></td><td></td><td></td>
+        <!-- 27 -->
+        <td class="day-cell" style="position:relative;">
+          <div class="bar bar-app" style="border-radius:4px 0 0 4px;right:0;"></div>
+        </td>
+        <td class="weekend-bg"></td><td class="weekend-bg"></td>
+        <!-- 30 -->
+        <td class="day-cell" style="position:relative;">
+          <div class="bar bar-app" style="left:0;border-radius:0 4px 4px 0;"></div>
+        </td>
+        <td class="deadline-bg"></td>
+      </tr>
+
+      <!-- Task 8: New Request Form -->
+      <tr class="task-row">
+        <td class="task-label col-label">
+          <div class="task-label-inner">
+            <div class="task-badge" style="background:#534AB7;"></div>
+            <div>
+              <div class="task-name">New Request Form + Route Dropdown ✨</div>
+              <div class="task-dept">Power Apps · PR/PO vs Corp Card selector</div>
+            </div>
+          </div>
+        </td>
+        <td></td><td></td>
+        <td class="weekend-bg"></td><td class="weekend-bg"></td>
+        <td></td><td></td><td></td><td></td><td></td>
+        <td class="weekend-bg"></td><td class="weekend-bg"></td>
+        <!-- 30 -->
+        <td class="day-cell" style="position:relative;">
+          <div class="bar bar-app">Form</div>
+        </td>
+        <td class="deadline-bg"></td>
+      </tr>
+
+      <!-- ── Phase 4: Permissions ── -->
+      <tr class="phase-row">
+        <td colspan="14" style="background:#FFF3EC;padding:4px 12px;font-size:10px;font-weight:700;color:#BF360C;text-transform:uppercase;letter-spacing:.5px;border-bottom:none;">
+          🔐 Phase 4 — Permissions
+        </td>
+      </tr>
+
+      <!-- Task 9: Permissions -->
+      <tr class="task-row">
+        <td class="task-label col-label">
+          <div class="task-label-inner">
+            <div class="task-badge" style="background:#E64A19;"></div>
+            <div>
+              <div class="task-name">Set SharePoint Permissions</div>
+              <div class="task-dept">HR Admin · IT · Manager · Employee groups</div>
+            </div>
+          </div>
+        </td>
+        <td></td><td></td>
+        <td class="weekend-bg"></td><td class="weekend-bg"></td>
+        <td></td><td></td><td></td><td></td><td></td>
+        <td class="weekend-bg"></td><td class="weekend-bg"></td>
+        <!-- 30 -->
+        <td class="day-cell" style="position:relative;">
+          <div class="bar bar-perm">Perm</div>
+        </td>
+        <td class="deadline-bg"></td>
+      </tr>
+
+      <!-- ── Phase 5: Testing ── -->
+      <tr class="phase-row">
+        <td colspan="14" style="background:#FEF2F2;padding:4px 12px;font-size:10px;font-weight:700;color:#A32D2D;text-transform:uppercase;letter-spacing:.5px;border-bottom:none;">
+          🧪 Phase 5 — Testing + Deploy
+        </td>
+      </tr>
+
+      <!-- Task 10: E2E Testing -->
+      <tr class="task-row">
+        <td class="task-label col-label">
+          <div class="task-label-inner">
+            <div class="task-badge" style="background:#A32D2D;"></div>
+            <div>
+              <div class="task-name">End-to-End Testing + Bug Fix</div>
+              <div class="task-dept">ทดสอบทุก Scenario + Deploy + UAT</div>
+            </div>
+          </div>
+        </td>
+        <td></td><td></td>
+        <td class="weekend-bg"></td><td class="weekend-bg"></td>
+        <td></td><td></td><td></td><td></td><td></td>
+        <td class="weekend-bg"></td><td class="weekend-bg"></td>
+        <td></td>
+        <!-- 31 DEADLINE -->
+        <td class="day-cell deadline-bg" style="position:relative;">
+          <div class="bar bar-test">TEST</div>
+          <div class="milestone"></div>
+        </td>
+      </tr>
+
+    </table>
+    </div>
+  </div>
+
+  <!-- Phase Summary -->
+  <div class="phases-card">
+    <div class="phases-title">Phase Overview</div>
+    <div class="phase-row2">
+      <div class="phase-dot" style="background:#1565C0;"></div>
+      <div class="phase-name">Phase 1 — SharePoint Lists</div>
+      <div class="phase-dates">19–20 มีนา (2 วัน)</div>
+      <div class="phase-bar-bg"><div class="phase-bar-fill" style="width:22%;background:#1565C0;"></div></div>
+      <div class="phase-tasks">2 tasks</div>
+    </div>
+    <div class="phase-row2">
+      <div class="phase-dot" style="background:#1D9E75;"></div>
+      <div class="phase-name">Phase 2 — Power Automate (5 Flows)</div>
+      <div class="phase-dates">23–26 มีนา (4 วัน)</div>
+      <div class="phase-bar-bg"><div class="phase-bar-fill" style="width:44%;background:#1D9E75;"></div></div>
+      <div class="phase-tasks">4 tasks</div>
+    </div>
+    <div class="phase-row2">
+      <div class="phase-dot" style="background:#534AB7;"></div>
+      <div class="phase-name">Phase 3 — Power Apps UI (3 Screens)</div>
+      <div class="phase-dates">27–30 มีนา (2 วัน)</div>
+      <div class="phase-bar-bg"><div class="phase-bar-fill" style="width:22%;background:#534AB7;"></div></div>
+      <div class="phase-tasks">2 tasks</div>
+    </div>
+    <div class="phase-row2">
+      <div class="phase-dot" style="background:#E64A19;"></div>
+      <div class="phase-name">Phase 4 — Permissions Setup</div>
+      <div class="phase-dates">30 มีนา (ครึ่งวัน)</div>
+      <div class="phase-bar-bg"><div class="phase-bar-fill" style="width:6%;background:#E64A19;"></div></div>
+      <div class="phase-tasks">1 task</div>
+    </div>
+    <div class="phase-row2">
+      <div class="phase-dot" style="background:#A32D2D;"></div>
+      <div class="phase-name">Phase 5 — Testing + Deploy ⚑ DEADLINE</div>
+      <div class="phase-dates">31 มีนา (1 วัน)</div>
+      <div class="phase-bar-bg"><div class="phase-bar-fill" style="width:11%;background:#A32D2D;"></div></div>
+      <div class="phase-tasks">1 task</div>
+    </div>
+  </div>
+
+  <!-- Task Detail Table -->
+  <div class="task-table-card">
+    <div class="task-table-title">📋 รายละเอียดงานทั้งหมด</div>
+    <table class="task-detail">
+      <tr>
+        <th style="width:28px;">#</th>
+        <th style="width:90px;">วันที่</th>
+        <th>Task</th>
+        <th style="width:80px;">Phase</th>
+        <th style="width:130px;">ผู้รับผิดชอบ</th>
+        <th style="width:80px;">สถานะ</th>
+      </tr>
+      <tr>
+        <td>1</td>
+        <td>19–20 มีนา</td>
+        <td><strong>Update 4 SharePoint Lists</strong> ให้ตรง column spec — SoftwareCatalog, Licenses, LicenseHistory, ApprovalRequests</td>
+        <td><span class="tag tag-sp">SharePoint</span></td>
+        <td>IT Admin / HR Admin</td>
+        <td><span class="status-todo"><span class="status-dot" style="background:#1565C0;"></span>วันนี้ ⬅</span></td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td>20 มีนา</td>
+        <td><strong>เพิ่ม Sample Data</strong> ใน SoftwareCatalog + Licenses — ทดสอบ Lookup + Calculated column DaysUntilExpiry</td>
+        <td><span class="tag tag-sp">SharePoint</span></td>
+        <td>IT Admin</td>
+        <td><span class="status-todo"><span class="status-dot" style="background:#E2E0D8;"></span>รอ</span></td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td>23 มีนา</td>
+        <td><strong>Flow 1 — Expiry Notification:</strong> Recurrence trigger · DaysLeft expression · Send email 3 tier · Update LicenseStatus</td>
+        <td><span class="tag tag-flow">Flow</span></td>
+        <td>IT Admin</td>
+        <td><span class="status-todo"><span class="status-dot" style="background:#E2E0D8;"></span>รอ</span></td>
+      </tr>
+      <tr>
+        <td>4</td>
+        <td>24 มีนา</td>
+        <td><strong>Flow 2 — Approval Renew:</strong> When item created in ApprovalRequests · Start and wait for approval · Approved/Rejected branches · LicenseHistory</td>
+        <td><span class="tag tag-flow">Flow</span></td>
+        <td>IT Admin</td>
+        <td><span class="status-todo"><span class="status-dot" style="background:#E2E0D8;"></span>รอ</span></td>
+      </tr>
+      <tr>
+        <td>5</td>
+        <td>25 มีนา</td>
+        <td><strong>Flow 3 — Resign/Transfer/Convert:</strong> PowerApps v2 trigger · Switch ActionType · LicenseHistory ทุก license · Email summary IT+HR</td>
+        <td><span class="tag tag-flow">Flow</span></td>
+        <td>IT Admin</td>
+        <td><span class="status-todo"><span class="status-dot" style="background:#E2E0D8;"></span>รอ</span></td>
+      </tr>
+      <tr>
+        <td>6</td>
+        <td>26 มีนา</td>
+        <td><strong>Flow 4+5 — New Flows (ใหม่):</strong> Request Notification → Approval · Route Selection → แจ้ง Procurement หรือ Finance แล้วแต่ Route</td>
+        <td><span class="tag tag-new">New ✨</span></td>
+        <td>IT Admin</td>
+        <td><span class="status-todo"><span class="status-dot" style="background:#E2E0D8;"></span>รอ</span></td>
+      </tr>
+      <tr>
+        <td>7</td>
+        <td>27, 30 มีนา</td>
+        <td><strong>Power Apps — Dashboard + All Licenses:</strong> KPI Cards · Gallery filter/search · ปุ่ม Renew/Revoke · History Timeline</td>
+        <td><span class="tag tag-app">Power Apps</span></td>
+        <td>IT Admin</td>
+        <td><span class="status-todo"><span class="status-dot" style="background:#E2E0D8;"></span>รอ</span></td>
+      </tr>
+      <tr>
+        <td>8</td>
+        <td>30 มีนา</td>
+        <td><strong>Power Apps — New Request Form (อัปเดต):</strong> Payment Route Dropdown · Dynamic fields · เรียก Flow 4+5 · Pending Purchase status</td>
+        <td><span class="tag tag-new">New ✨</span></td>
+        <td>IT Admin</td>
+        <td><span class="status-todo"><span class="status-dot" style="background:#E2E0D8;"></span>รอ</span></td>
+      </tr>
+      <tr>
+        <td>9</td>
+        <td>30 มีนา</td>
+        <td><strong>Set Permissions:</strong> สร้าง SharePoint Groups (HR Admin, IT Admin, Manager, Employee) · Item-level permissions · Power Apps role check (isHRAdmin)</td>
+        <td><span class="tag tag-perm">Perm</span></td>
+        <td>HR Admin</td>
+        <td><span class="status-todo"><span class="status-dot" style="background:#E2E0D8;"></span>รอ</span></td>
+      </tr>
+      <tr>
+        <td>10</td>
+        <td>31 มีนา ⚑</td>
+        <td><strong>End-to-End Testing + Deploy:</strong> ทดสอบ 10 Test Cases · แก้ Bug · Share Power App ให้ HR team · UAT กับผู้ใช้จริง</td>
+        <td><span class="tag tag-test">Testing</span></td>
+        <td>HR Admin + IT</td>
+        <td><span class="status-todo"><span class="status-dot" style="background:#A32D2D;"></span>Deadline</span></td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- Risk / Watch -->
+  <div class="risk-card">
+    <div class="risk-title">⚠️ จุดเสี่ยง ที่ต้องระวัง</div>
+    <div class="risk-row"><span class="risk-icon">🔴</span> Power Apps ใช้เวลานานที่สุด — ถ้า Flow ติดปัญหา อาจเบียด Power Apps screen ให้เหลือแค่ 1 วัน</div>
+    <div class="risk-row"><span class="risk-icon">🟡</span> "Start and wait for approval" (Flow 2) ต้องการ Microsoft Approvals license — ตรวจสอบสิทธิ์ก่อนวัน 24</div>
+    <div class="risk-row"><span class="risk-icon">🟡</span> Flow 5 (Route Notification ใหม่) ขึ้นอยู่กับว่า Power Apps Form จะ trigger ได้ถูกต้อง — Build Flow ก่อน Form</div>
+    <div class="risk-row"><span class="risk-icon">🟢</span> ถ้าติดปัญหา Power Apps ให้ scope ลงเหลือแค่ Dashboard + New Request Form ก่อน — All Licenses screen ทำ V2 ได้</div>
+  </div>
+
+  <div class="footer-note">HRIS · License Management System · Timeline สร้างวันที่ 19 มีนาคม 2026</div>
+</div>
+</body>
+</html>

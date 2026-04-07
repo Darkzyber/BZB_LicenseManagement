@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>License Management System — Project Hub</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #F4F3EF;
+  --card: #FFFFFF;
+  --border: #E2E0D8;
+  --text: #1C1B18;
+  --muted: #6B6A63;
+  --green: #1D9E75;
+  --green-bg: #E1F5EE;
+  --green-dark: #0F6E56;
+  --blue: #2B7DE9;
+  --blue-bg: #E6F1FB;
+  --blue-dark: #185FA5;
+  --amber: #D97706;
+  --amber-bg: #FEF3C7;
+  --red: #DC2626;
+  --red-bg: #FEE2E2;
+  --purple: #7C3AED;
+  --purple-bg: #EDE9FE;
+  --deadline: #A32D2D;
+}
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif; background: var(--bg); color: var(--text); font-size: 13px; min-height: 100vh; }
+
+/* ── Top Nav ── */
+.topbar { background: #1C1B18; color: #fff; padding: 0 24px; display: flex; align-items: center; gap: 16px; height: 48px; position: sticky; top: 0; z-index: 100; }
+.topbar-logo { font-size: 15px; font-weight: 700; color: #fff; letter-spacing: -0.3px; }
+.topbar-logo span { color: var(--green); }
+.topbar-sub { font-size: 11px; color: #9CA3AF; border-left: 1px solid #374151; padding-left: 12px; }
+.topbar-deadline { margin-left: auto; background: var(--red-bg); color: var(--deadline); font-size: 11px; font-weight: 600; padding: 4px 12px; border-radius: 20px; }
+.topbar-date { font-size: 11px; color: #9CA3AF; margin-left: 8px; }
+
+/* ── Layout ── */
+.layout { display: grid; grid-template-columns: 220px 1fr; min-height: calc(100vh - 48px); }
+
+/* ── Sidebar ── */
+.sidebar { background: #fff; border-right: 1px solid var(--border); padding: 20px 0; position: sticky; top: 48px; height: calc(100vh - 48px); overflow-y: auto; }
+.sidebar-section { padding: 0 12px; margin-bottom: 20px; }
+.sidebar-label { font-size: 10px; font-weight: 600; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.8px; padding: 0 8px; margin-bottom: 6px; }
+.sidebar-link { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-radius: 7px; cursor: pointer; color: var(--text); text-decoration: none; font-size: 12.5px; font-weight: 500; transition: background .12s; border: none; background: none; width: 100%; text-align: left; }
+.sidebar-link:hover { background: var(--bg); }
+.sidebar-link.active { background: var(--green-bg); color: var(--green-dark); }
+.sidebar-icon { width: 18px; height: 18px; border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 10px; flex-shrink: 0; }
+.sidebar-badge { margin-left: auto; font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 10px; }
+
+/* ── Main Content ── */
+.main { padding: 24px; overflow-y: auto; }
+.view { display: none; }
+.view.active { display: block; }
+
+/* ── Section Title ── */
+.section-title { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+.section-sub { font-size: 12px; color: var(--muted); margin-bottom: 20px; }
+
+/* ── Cards grid ── */
+.cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 24px; }
+.stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+.stat-card-label { font-size: 11px; color: var(--muted); font-weight: 500; margin-bottom: 6px; }
+.stat-card-value { font-size: 26px; font-weight: 700; }
+.stat-card-sub { font-size: 11px; color: var(--muted); margin-top: 4px; }
+.c-green { color: var(--green); } .c-blue { color: var(--blue); } .c-amber { color: var(--amber); } .c-red { color: var(--red); } .c-purple { color: var(--purple); }
+
+/* ── Progress bar ── */
+.progress-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 24px; }
+.progress-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; font-size: 13px; font-weight: 600; }
+.progress-bar-bg { background: var(--border); border-radius: 8px; height: 10px; overflow: hidden; }
+.progress-bar-fill { background: linear-gradient(90deg, var(--green), #17B87D); height: 100%; border-radius: 8px; transition: width 0.6s ease; }
+.progress-pct { font-size: 12px; color: var(--muted); }
+
+/* ── Phase timeline ── */
+.phases { display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px; }
+.phase-row { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; display: grid; grid-template-columns: 28px 180px 1fr auto; align-items: center; gap: 12px; }
+.phase-num { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #fff; flex-shrink: 0; }
+.phase-info { }
+.phase-name { font-size: 13px; font-weight: 600; }
+.phase-date { font-size: 11px; color: var(--muted); }
+.phase-bar-wrap { }
+.phase-bar-bg { background: var(--border); border-radius: 6px; height: 8px; overflow: hidden; }
+.phase-bar-fill { height: 100%; border-radius: 6px; transition: width 0.5s; }
+.phase-status { font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 12px; white-space: nowrap; }
+.status-done    { background: var(--green-bg); color: var(--green-dark); }
+.status-active  { background: var(--blue-bg); color: var(--blue-dark); }
+.status-pending { background: var(--bg); color: var(--muted); border: 1px solid var(--border); }
+.status-warn    { background: var(--amber-bg); color: var(--amber); }
+
+/* ── File cards ── */
+.file-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+.file-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 10px; transition: box-shadow .15s; text-decoration: none; color: inherit; }
+.file-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); border-color: #C5C3BC; }
+.file-card-icon { font-size: 24px; }
+.file-card-title { font-size: 14px; font-weight: 700; }
+.file-card-desc { font-size: 12px; color: var(--muted); line-height: 1.5; flex: 1; }
+.file-card-meta { display: flex; align-items: center; justify-content: space-between; }
+.file-card-type { font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 8px; }
+.file-card-arrow { font-size: 14px; color: var(--muted); }
+
+/* ── Relation map ── */
+.relation-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 24px; overflow-x: auto; }
+.relation-title { font-size: 14px; font-weight: 700; margin-bottom: 16px; }
+.rel-svg { width: 100%; max-width: 860px; display: block; margin: 0 auto; }
+
+/* ── Task table ── */
+.task-table { width: 100%; border-collapse: collapse; }
+.task-table th { background: var(--bg); border: 1px solid var(--border); padding: 8px 12px; font-size: 11px; font-weight: 600; color: var(--muted); text-align: left; }
+.task-table td { border: 1px solid var(--border); padding: 9px 12px; font-size: 12.5px; vertical-align: top; background: var(--card); }
+.task-table tr:hover td { background: #FAFAF8; }
+.task-phase-row td { background: #F7F6F2; font-weight: 700; font-size: 12px; color: var(--muted); }
+.tag { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 8px; display: inline-block; }
+.priority-high { background: var(--red-bg); color: var(--red); }
+.priority-med  { background: var(--amber-bg); color: var(--amber); }
+.priority-low  { background: var(--green-bg); color: var(--green-dark); }
+.owner-tag { background: var(--blue-bg); color: var(--blue-dark); }
+
+/* ── Days left banner ── */
+.days-banner { background: linear-gradient(135deg, #1C1B18 0%, #2E2C26 100%); color: #fff; border-radius: 12px; padding: 20px 24px; display: flex; align-items: center; gap: 24px; margin-bottom: 24px; }
+.days-number { font-size: 48px; font-weight: 800; color: var(--green); line-height: 1; }
+.days-label { font-size: 12px; color: #9CA3AF; }
+.days-title { font-size: 16px; font-weight: 700; }
+.days-divider { width: 1px; height: 48px; background: #374151; }
+.days-tasks { flex: 1; }
+.days-task-item { font-size: 12px; color: #D1D5DB; margin-bottom: 3px; display: flex; gap: 6px; }
+.days-task-dot { color: var(--green); font-size: 8px; margin-top: 3px; flex-shrink: 0; }
+
+/* ── Responsive ── */
+@media (max-width: 700px) {
+  .layout { grid-template-columns: 1fr; }
+  .sidebar { display: none; }
+  .file-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- ── Top Bar ── -->
+<div class="topbar">
+  <div class="topbar-logo">License<span>Hub</span></div>
+  <div class="topbar-sub">Software License Management System — Power Platform</div>
+  <div class="topbar-deadline">⏰ Deadline: 31 มีนาคม 2026</div>
+  <div class="topbar-date" id="today-date"></div>
+</div>
+
+<div class="layout">
+
+  <!-- ── Sidebar ── -->
+  <nav class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label">Overview</div>
+      <button class="sidebar-link active" onclick="showView('overview')">
+        <div class="sidebar-icon" style="background:#E1F5EE">🏠</div>
+        Project Overview
+      </button>
+      <button class="sidebar-link" onclick="showView('timeline')">
+        <div class="sidebar-icon" style="background:#E6F1FB">📅</div>
+        Timeline & Phases
+      </button>
+      <button class="sidebar-link" onclick="showView('tasks')">
+        <div class="sidebar-icon" style="background:#FEF3C7">✅</div>
+        Tasks & Deadlines
+        <span class="sidebar-badge" style="background:var(--amber-bg);color:var(--amber)">10</span>
+      </button>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">เอกสาร & ไฟล์</div>
+      <a class="sidebar-link" href="Timeline_LicenseManagement.html" target="_blank">
+        <div class="sidebar-icon" style="background:#E6F1FB">📊</div>
+        Gantt Chart
+      </a>
+      <a class="sidebar-link" href="LicenseFlow_New_Design.html" target="_blank">
+        <div class="sidebar-icon" style="background:#E1F5EE">🔄</div>
+        System Design v2
+      </a>
+      <a class="sidebar-link" href="checklist_license_management.html" target="_blank">
+        <div class="sidebar-icon" style="background:#FEF3C7">☑️</div>
+        Checklist
+      </a>
+      <a class="sidebar-link" href="faq_knowledge_base.html" target="_blank">
+        <div class="sidebar-icon" style="background:#EDE9FE">💡</div>
+        FAQ & Knowledge Base
+      </a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">Word Documents</div>
+      <a class="sidebar-link" href="WP_SoftwareLicense_Management.docx">
+        <div class="sidebar-icon" style="background:#E6F1FB">📋</div>
+        Work Procedure
+      </a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">Relation Map</div>
+      <button class="sidebar-link" onclick="showView('relations')">
+        <div class="sidebar-icon" style="background:#FEE2E2">🗺️</div>
+        System Relations
+      </button>
+    </div>
+  </nav>
+
+  <!-- ── Main ── -->
+  <main class="main">
+
+    <!-- ═══════════════════════════════ VIEW: OVERVIEW ═══════════════════════════ -->
+    <div class="view active" id="view-overview">
+      <div class="section-title">🏠 Project Overview</div>
+      <div class="section-sub">License Management System บน Power Platform — ภาพรวมโครงการ</div>
+
+      <!-- Days left banner -->
+      <div class="days-banner">
+        <div>
+          <div class="days-label">วันทำการที่เหลือ</div>
+          <div class="days-number" id="days-left">—</div>
+          <div class="days-label">วัน</div>
+        </div>
+        <div class="days-divider"></div>
+        <div class="days-tasks">
+          <div class="days-title">สิ่งที่ต้องทำให้เสร็จก่อน 31 มี.ค. 2026</div>
+          <div style="height:8px"></div>
+          <div class="days-task-item"><span class="days-task-dot">●</span>ตั้งค่า SharePoint Lists + เพิ่ม columns ใหม่ (PaymentMethod, PONumber, CCRefID, PurchaseStatus)</div>
+          <div class="days-task-item"><span class="days-task-dot">●</span>สร้าง Power Automate Flows 4 รายการ (Approval, Write-Back, Expiry Action, License Movement)</div>
+          <div class="days-task-item"><span class="days-task-dot">●</span>พัฒนา Power Apps Canvas App 3 หน้าจอ</div>
+          <div class="days-task-item"><span class="days-task-dot">●</span>ทดสอบระบบและ UAT กับผู้ใช้งาน</div>
+          <div class="days-task-item"><span class="days-task-dot">●</span>ส่งมอบเอกสารและ Go-Live</div>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="cards-grid">
+        <div class="stat-card">
+          <div class="stat-card-label">📋 SharePoint Lists</div>
+          <div class="stat-card-value c-blue">4</div>
+          <div class="stat-card-sub">SoftwareCatalog, Licenses,<br>LicenseHistory, ApprovalRequests</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">⚡ Power Automate Flows</div>
+          <div class="stat-card-value c-purple">4</div>
+          <div class="stat-card-sub">Flow 1: Approval · Flow 2: Write-Back · Flow 3: Expiry Action · Flow 4: License Movement</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">📱 Power Apps Screens</div>
+          <div class="stat-card-value c-green">3</div>
+          <div class="stat-card-sub">Dashboard, Request Form,<br>Admin Management</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">👥 Stakeholders</div>
+          <div class="stat-card-value c-amber">5</div>
+          <div class="stat-card-sub">พนักงาน, Manager, HR/IT,<br>จัดซื้อ, การเงิน</div>
+        </div>
+      </div>
+
+      <!-- Quick links to all files -->
+      <div style="font-size:14px;font-weight:700;margin-bottom:12px">🗂️ ไฟล์ทั้งหมดในโครงการ</div>
+      <div class="file-grid">
+        <a class="file-card" href="Timeline_LicenseManagement.html" target="_blank">
+          <div class="file-card-icon">📊</div>
+          <div class="file-card-title">Gantt Chart — Timeline</div>
+          <div class="file-card-desc">ตารางแผนงาน 9 วันทำการ แสดง 5 Phases และ 10 Tasks พร้อมวันครบกำหนดแต่ละงาน</div>
+          <div class="file-card-meta">
+            <span class="file-card-type" style="background:var(--blue-bg);color:var(--blue-dark)">HTML · Interactive</span>
+            <span class="file-card-arrow">↗</span>
+          </div>
+        </a>
+        <a class="file-card" href="LicenseFlow_New_Design.html" target="_blank">
+          <div class="file-card-icon">🔄</div>
+          <div class="file-card-title">System Design v2 — Flow + Changes</div>
+          <div class="file-card-desc">Flow ใหม่: User Request → Approval → Purchase Write-Back (PO# / CC ID) → License Management พร้อม changelog SharePoint / Flows / Apps</div>
+          <div class="file-card-meta">
+            <span class="file-card-type" style="background:var(--green-bg);color:var(--green-dark)">HTML · 5 Tabs</span>
+            <span class="file-card-arrow">↗</span>
+          </div>
+        </a>
+        <a class="file-card" href="checklist_license_management.html" target="_blank">
+          <div class="file-card-icon">☑️</div>
+          <div class="file-card-title">Project Checklist</div>
+          <div class="file-card-desc">รายการงานทั้งหมดแบ่งตาม Phase พร้อม Progress Bar ติ๊กได้ในเบราว์เซอร์</div>
+          <div class="file-card-meta">
+            <span class="file-card-type" style="background:var(--amber-bg);color:var(--amber)">HTML · Interactive</span>
+            <span class="file-card-arrow">↗</span>
+          </div>
+        </a>
+        <a class="file-card" href="WP_SoftwareLicense_Management.docx">
+          <div class="file-card-icon">📋</div>
+          <div class="file-card-title">Work Procedure (คู่มือ)</div>
+          <div class="file-card-desc">เอกสารคู่มือการปฏิบัติงาน รูปแบบเดียวกับ HUM-WP-003 พร้อม Swimlane และ Special Cases</div>
+          <div class="file-card-meta">
+            <span class="file-card-type" style="background:var(--blue-bg);color:var(--blue-dark)">DOCX · Document</span>
+            <span class="file-card-arrow">↓</span>
+          </div>
+        </a>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════ VIEW: TIMELINE ═══════════════════════════ -->
+    <div class="view" id="view-timeline">
+      <div class="section-title">📅 Timeline & Phases</div>
+      <div class="section-sub">แผนงาน 9 วันทำการ (19–31 มีนาคม 2026) แบ่งเป็น 5 Phase</div>
+
+      <div class="progress-wrap">
+        <div class="progress-header">
+          <span>ความคืบหน้าโดยรวม</span>
+          <span class="progress-pct" id="overall-pct">คำนวณ...</span>
+        </div>
+        <div class="progress-bar-bg">
+          <div class="progress-bar-fill" id="overall-bar" style="width:0%"></div>
+        </div>
+      </div>
+
+      <div class="phases" id="phases-list"></div>
+
+      <div style="margin-top:16px">
+        <a href="Timeline_LicenseManagement.html" target="_blank"
+           style="display:inline-flex;align-items:center;gap:8px;background:var(--blue);color:#fff;padding:9px 18px;border-radius:8px;text-decoration:none;font-size:13px;font-weight:600;">
+          📊 เปิด Gantt Chart แบบเต็ม ↗
+        </a>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════ VIEW: TASKS ═══════════════════════════════ -->
+    <div class="view" id="view-tasks">
+      <div class="section-title">✅ Tasks & Deadlines</div>
+      <div class="section-sub">งานทั้งหมด 10 รายการ เรียงตาม Phase และวันครบกำหนด</div>
+
+      <table class="task-table">
+        <thead>
+          <tr>
+            <th style="width:30px">#</th>
+            <th>งาน (Task)</th>
+            <th>เจ้าของงาน</th>
+            <th>วันครบกำหนด</th>
+            <th>Priority</th>
+            <th>เชื่อมกับ</th>
+          </tr>
+        </thead>
+        <tbody id="task-tbody"></tbody>
+      </table>
+
+      <div style="margin-top:16px">
+        <a href="checklist_license_management.html" target="_blank"
+           style="display:inline-flex;align-items:center;gap:8px;background:var(--amber);color:#fff;padding:9px 18px;border-radius:8px;text-decoration:none;font-size:13px;font-weight:600;">
+          ☑️ เปิด Interactive Checklist ↗
+        </a>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════ VIEW: RELATIONS ══════════════════════════ -->
+    <div class="view" id="view-relations">
+      <div class="section-title">🗺️ System Relations</div>
+      <div class="section-sub">ความสัมพันธ์ระหว่าง SharePoint Lists, Flows, Apps และเอกสาร</div>
+
+      <div class="relation-wrap">
+        <div class="relation-title">📌 ความสัมพันธ์ระหว่าง Lists (SharePoint)</div>
+        <svg class="rel-svg" viewBox="0 0 860 320" xmlns="http://www.w3.org/2000/svg" font-family="system-ui,sans-serif" font-size="12">
+          <!-- SoftwareCatalog -->
+          <rect x="20" y="110" width="160" height="80" rx="10" fill="#E6F1FB" stroke="#2B7DE9" stroke-width="2"/>
+          <text x="100" y="145" text-anchor="middle" font-weight="700" fill="#185FA5" font-size="13">SoftwareCatalog</text>
+          <text x="100" y="162" text-anchor="middle" fill="#185FA5">Title, Vendor, Category</text>
+          <text x="100" y="178" text-anchor="middle" fill="#6B6A63" font-size="11">รายการซอฟต์แวร์ทั้งหมด</text>
+          <!-- ApprovalRequests -->
+          <rect x="240" y="20" width="170" height="80" rx="10" fill="#FEF3C7" stroke="#D97706" stroke-width="2"/>
+          <text x="325" y="55" text-anchor="middle" font-weight="700" fill="#854F0B" font-size="13">ApprovalRequests</text>
+          <text x="325" y="72" text-anchor="middle" fill="#854F0B">RequestedBy, Status</text>
+          <text x="325" y="88" text-anchor="middle" fill="#6B6A63" font-size="11">คำขออนุมัติ</text>
+          <!-- Licenses -->
+          <rect x="440" y="110" width="170" height="80" rx="10" fill="#E1F5EE" stroke="#1D9E75" stroke-width="2"/>
+          <text x="525" y="145" text-anchor="middle" font-weight="700" fill="#0F6E56" font-size="13">Licenses</text>
+          <text x="525" y="162" text-anchor="middle" fill="#0F6E56">LicenseKey, ExpiryDate</text>
+          <text x="525" y="178" text-anchor="middle" fill="#6B6A63" font-size="11">ข้อมูล License ที่ใช้งาน</text>
+          <!-- LicenseHistory -->
+          <rect x="440" y="220" width="170" height="80" rx="10" fill="#EDE9FE" stroke="#7C3AED" stroke-width="2"/>
+          <text x="525" y="255" text-anchor="middle" font-weight="700" fill="#5B21B6" font-size="13">LicenseHistory</text>
+          <text x="525" y="272" text-anchor="middle" fill="#5B21B6">Action, ChangedDate</text>
+          <text x="525" y="288" text-anchor="middle" fill="#6B6A63" font-size="11">ประวัติการเปลี่ยนแปลง</text>
+          <!-- Power Automate (center) -->
+          <ellipse cx="320" cy="170" rx="70" ry="35" fill="#FEE2E2" stroke="#DC2626" stroke-width="2"/>
+          <text x="320" y="165" text-anchor="middle" font-weight="700" fill="#991B1B" font-size="12">Power Automate</text>
+          <text x="320" y="180" text-anchor="middle" fill="#991B1B" font-size="11">3 Flows</text>
+          <!-- Power Apps -->
+          <rect x="660" y="110" width="170" height="80" rx="10" fill="#FEE2E2" stroke="#DC2626" stroke-width="2"/>
+          <text x="745" y="145" text-anchor="middle" font-weight="700" fill="#991B1B" font-size="13">Power Apps</text>
+          <text x="745" y="162" text-anchor="middle" fill="#991B1B">Canvas App</text>
+          <text x="745" y="178" text-anchor="middle" fill="#6B6A63" font-size="11">3 หน้าจอ</text>
+
+          <!-- Arrows -->
+          <!-- SoftwareCatalog → Licenses -->
+          <line x1="180" y1="150" x2="440" y2="150" stroke="#2B7DE9" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#a1)"/>
+          <text x="310" y="143" text-anchor="middle" fill="#6B6A63" font-size="10">SoftwareRef</text>
+          <!-- ApprovalRequests → Licenses -->
+          <line x1="325" y1="100" x2="510" y2="115" stroke="#D97706" stroke-width="1.5" marker-end="url(#a2)"/>
+          <text x="420" y="100" text-anchor="middle" fill="#D97706" font-size="10">อนุมัติแล้ว</text>
+          <!-- Licenses → LicenseHistory -->
+          <line x1="525" y1="190" x2="525" y2="220" stroke="#1D9E75" stroke-width="1.5" marker-end="url(#a3)"/>
+          <text x="560" y="210" fill="#1D9E75" font-size="10">log</text>
+          <!-- Power Automate ↔ ApprovalRequests -->
+          <line x1="320" y1="135" x2="325" y2="100" stroke="#DC2626" stroke-width="1.5" marker-end="url(#a4)"/>
+          <!-- Power Automate ↔ Licenses -->
+          <line x1="390" y1="160" x2="440" y2="150" stroke="#DC2626" stroke-width="1.5" marker-end="url(#a4)"/>
+          <!-- Power Automate ↔ LicenseHistory -->
+          <line x1="370" y1="185" x2="440" y2="240" stroke="#DC2626" stroke-width="1.5" marker-end="url(#a4)"/>
+          <!-- Power Apps → Power Automate -->
+          <line x1="660" y1="150" x2="390" y2="162" stroke="#DC2626" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#a4)"/>
+          <text x="535" y="148" text-anchor="middle" fill="#DC2626" font-size="10">trigger</text>
+          <!-- Power Apps → Licenses -->
+          <line x1="660" y1="155" x2="610" y2="155" stroke="#6B6A63" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#a5)"/>
+
+          <defs>
+            <marker id="a1" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0 L8,4 L0,8z" fill="#2B7DE9"/></marker>
+            <marker id="a2" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0 L8,4 L0,8z" fill="#D97706"/></marker>
+            <marker id="a3" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0 L8,4 L0,8z" fill="#1D9E75"/></marker>
+            <marker id="a4" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0 L8,4 L0,8z" fill="#DC2626"/></marker>
+            <marker id="a5" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0 L8,4 L0,8z" fill="#6B6A63"/></marker>
+          </defs>
+        </svg>
+      </div>
+
+      <!-- Flows ↔ Docs relation -->
+      <div class="relation-wrap">
+        <div class="relation-title">📄 เอกสาร ↔ ส่วนประกอบระบบ</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-top:4px">
+          <div style="border:1px solid var(--border);border-radius:8px;padding:12px;background:var(--card)">
+            <div style="font-weight:700;margin-bottom:6px;font-size:13px">📋 Work Procedure</div>
+            <div style="font-size:11px;color:var(--muted);line-height:1.7">
+              → Swimlane: ทุก Stakeholder<br>
+              → Input-Process-Output<br>
+              → Special Cases (Resign/Transfer/Renewal)
+            </div>
+          </div>
+          <div style="border:1px solid var(--border);border-radius:8px;padding:12px;background:var(--card)">
+            <div style="font-weight:700;margin-bottom:6px;font-size:13px">🔄 System Design v2</div>
+            <div style="font-size:11px;color:var(--muted);line-height:1.7">
+              → 3 Phases: Request → Purchase → License<br>
+              → Write-Back: PO# / CC ID → SharePoint<br>
+              → SharePoint columns + 3 Flows + Apps changes
+            </div>
+          </div>
+          <div style="border:1px solid var(--border);border-radius:8px;padding:12px;background:var(--card)">
+            <div style="font-weight:700;margin-bottom:6px;font-size:13px">☑️ Checklist (v2)</div>
+            <div style="font-size:11px;color:var(--muted);line-height:1.7">
+              → 103 tasks ใน 5 phases<br>
+              → เริ่มจาก SharePoint จนถึง Go-Live<br>
+              → ติ๊กได้ในเบราว์เซอร์ + progress bar
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+// ── Data ──────────────────────────────────────────────────────────────────────
+const PHASES = [
+  {
+    num: 1, name: 'SharePoint Setup', dates: '19–20 มี.ค.', color: '#2B7DE9', bgColor: '#E6F1FB',
+    tasks: 2, done: 0,
+    items: ['สร้าง SharePoint Lists ทั้ง 4 รายการ', 'กำหนด Permissions และ Views']
+  },
+  {
+    num: 2, name: 'Power Automate Flows', dates: '21–24 มี.ค.', color: '#7C3AED', bgColor: '#EDE9FE',
+    tasks: 3, done: 0,
+    items: ['Flow 1: Expiry Check & Alert', 'Flow 2: Approval Workflow', 'Flow 3-5: Notification Flows']
+  },
+  {
+    num: 3, name: 'Power Apps Development', dates: '24–26 มี.ค.', color: '#D97706', bgColor: '#FEF3C7',
+    tasks: 2, done: 0,
+    items: ['Screen 1: Dashboard & Overview', 'Screen 2: Request Form, Screen 3: Admin']
+  },
+  {
+    num: 4, name: 'Testing & UAT', dates: '27–28 มี.ค.', color: '#DC2626', bgColor: '#FEE2E2',
+    tasks: 2, done: 0,
+    items: ['Internal Testing ครบทุก Flow', 'UAT กับผู้ใช้งานจริง']
+  },
+  {
+    num: 5, name: 'Go-Live & Docs', dates: '31 มี.ค.', color: '#1D9E75', bgColor: '#E1F5EE',
+    tasks: 1, done: 0,
+    items: ['Deploy ระบบ + ส่งมอบเอกสารครบ']
+  },
+];
+
+const TASKS = [
+  { phase: 1, pname: '📐 Phase 1 — SharePoint Setup', task: 'สร้าง SharePoint Lists ทั้ง 4 รายการ + columns ใหม่ (PaymentMethod, PONumber, CCRefID, PurchaseStatus)', owner: 'HR/IT Admin', due: '20 มี.ค.', priority: 'high', link: 'LicenseFlow_New_Design.html' },
+  { phase: 1, task: 'กำหนด Permissions, Views และ Lookup Columns', owner: 'HR/IT Admin', due: '20 มี.ค.', priority: 'high', link: 'checklist_license_management.html' },
+  { phase: 2, pname: '⚡ Phase 2 — Power Automate Flows', task: 'Flow 1: Request & Approval + PaymentMethod Routing', owner: 'Developer', due: '22 มี.ค.', priority: 'high', link: 'LicenseFlow_New_Design.html' },
+  { phase: 2, task: 'Flow 2: Write-Back Listener (PurchaseStatus = Completed → สร้าง License)', owner: 'Developer', due: '23 มี.ค.', priority: 'high', link: 'LicenseFlow_New_Design.html' },
+  { phase: 2, task: 'Flow 3: Expiry Monitor (แจ้งเตือน 30/7/1 วันก่อนหมดอายุ)', owner: 'Developer', due: '24 มี.ค.', priority: 'med', link: 'LicenseFlow_New_Design.html' },
+  { phase: 3, pname: '📱 Phase 3 — Power Apps Development', task: 'Screen 1: Dashboard + Pending Purchases counter', owner: 'Developer', due: '25 มี.ค.', priority: 'high', link: 'LicenseFlow_New_Design.html' },
+  { phase: 3, task: 'Screen 2: Request Form (+ PaymentMethod dropdown) + Screen 3: Admin + Write-Back section', owner: 'Developer', due: '26 มี.ค.', priority: 'high', link: 'LicenseFlow_New_Design.html' },
+  { phase: 4, pname: '🧪 Phase 4 — Testing & UAT', task: 'Internal Testing ครบทุก Flow และ Edge Cases', owner: 'Developer + HR', due: '27 มี.ค.', priority: 'high', link: 'checklist_license_management.html' },
+  { phase: 4, task: 'UAT กับผู้ใช้งานจริง (พนักงาน + Manager + HR)', owner: 'HR/IT Admin', due: '28 มี.ค.', priority: 'high', link: 'checklist_license_management.html' },
+  { phase: 5, pname: '🚀 Phase 5 — Go-Live & Docs', task: 'Deploy ระบบ + ส่งมอบเอกสารทั้งหมด + Announce', owner: 'HR/IT Admin', due: '31 มี.ค.', priority: 'high', link: 'WP_SoftwareLicense_Management.docx' },
+];
+
+// ── Date helpers ───────────────────────────────────────────────────────────────
+function workingDaysLeft() {
+  const now = new Date();
+  const deadline = new Date('2026-03-31');
+  let count = 0;
+  const cur = new Date(now);
+  cur.setHours(0,0,0,0);
+  deadline.setHours(23,59,59,999);
+  while (cur <= deadline) {
+    const d = cur.getDay();
+    if (d !== 0 && d !== 6) count++;
+    cur.setDate(cur.getDate() + 1);
+  }
+  return count;
+}
+
+// ── Render ─────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  // Date
+  const d = new Date();
+  document.getElementById('today-date').textContent =
+    d.toLocaleDateString('th-TH', { day:'numeric', month:'short', year:'numeric' });
+
+  // Days left
+  const dl = workingDaysLeft();
+  document.getElementById('days-left').textContent = dl;
+
+  // Phases
+  const phaseEl = document.getElementById('phases-list');
+  let totalTasks = 0, doneTasks = 0;
+  PHASES.forEach((p, i) => {
+    totalTasks += p.tasks;
+    doneTasks += p.done;
+    const pct = p.tasks > 0 ? Math.round((p.done / p.tasks) * 100) : 0;
+    const status = p.done === p.tasks ? 'done' : (i === 0 ? 'active' : 'pending');
+    const statusLabel = { done: '✅ เสร็จแล้ว', active: '🔵 กำลังทำ', pending: '⬜ รอดำเนินการ', warn: '⚠ เร่งด่วน' };
+    const el = document.createElement('div');
+    el.className = 'phase-row';
+    el.innerHTML = `
+      <div class="phase-num" style="background:${p.color}">${p.num}</div>
+      <div class="phase-info">
+        <div class="phase-name">${p.name}</div>
+        <div class="phase-date">📅 ${p.dates}</div>
+      </div>
+      <div class="phase-bar-wrap">
+        <div class="phase-bar-bg">
+          <div class="phase-bar-fill" style="width:${pct}%;background:${p.color}"></div>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-top:3px">${p.items.join(' · ')}</div>
+      </div>
+      <div class="phase-status status-${status}">${statusLabel[status]}</div>
+    `;
+    phaseEl.appendChild(el);
+  });
+
+  // Overall progress
+  const overallPct = Math.round((doneTasks / totalTasks) * 100);
+  document.getElementById('overall-bar').style.width = overallPct + '%';
+  document.getElementById('overall-pct').textContent = `${overallPct}% (${doneTasks}/${totalTasks} tasks)`;
+
+  // Tasks
+  const tbody = document.getElementById('task-tbody');
+  let lastPhase = -1;
+  TASKS.forEach((t, i) => {
+    if (t.pname) {
+      const hdr = document.createElement('tr');
+      hdr.className = 'task-phase-row';
+      hdr.innerHTML = `<td colspan="6">${t.pname}</td>`;
+      tbody.appendChild(hdr);
+    }
+    const priorityLabel = { high: '🔴 สูง', med: '🟡 ปานกลาง', low: '🟢 ต่ำ' };
+    const priorityClass = { high: 'priority-high', med: 'priority-med', low: 'priority-low' };
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="color:var(--muted);text-align:center">${i+1}</td>
+      <td>${t.task}</td>
+      <td><span class="tag owner-tag">${t.owner}</span></td>
+      <td style="white-space:nowrap;font-weight:600">${t.due}</td>
+      <td><span class="tag ${priorityClass[t.priority]}">${priorityLabel[t.priority]}</span></td>
+      <td><a href="${t.link}" target="_blank" style="color:var(--blue);text-decoration:none;font-size:11px">📎 ดูไฟล์ ↗</a></td>
+    `;
+    tbody.appendChild(tr);
+  });
+});
+
+// ── Navigation ─────────────────────────────────────────────────────────────────
+function showView(id) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+  document.getElementById('view-' + id).classList.add('active');
+  event.currentTarget.classList.add('active');
+}
+</script>
+</body>
+</html>

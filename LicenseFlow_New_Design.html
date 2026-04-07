@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>License Management — System Design v2</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#F4F3EF;--card:#fff;--border:#E2E0D8;--text:#1C1B18;--muted:#6B6A63;
+  --green:#1D9E75;--green-bg:#E1F5EE;--green-dk:#0F6E56;
+  --blue:#2B7DE9;--blue-bg:#E6F1FB;--blue-dk:#185FA5;
+  --amber:#D97706;--amber-bg:#FEF3C7;--amber-dk:#854F0B;
+  --red:#DC2626;--red-bg:#FEE2E2;--red-dk:#991B1B;
+  --purple:#7C3AED;--purple-bg:#EDE9FE;--purple-dk:#5B21B6;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:13px}
+.topbar{background:#1C1B18;color:#fff;padding:0 24px;display:flex;align-items:center;gap:12px;height:46px;position:sticky;top:0;z-index:100}
+.topbar-title{font-size:15px;font-weight:700;color:#fff}
+.topbar-title span{color:var(--green)}
+.topbar-sub{font-size:11px;color:#9CA3AF;border-left:1px solid #374151;padding-left:12px}
+.tab-bar{display:flex;gap:4px;padding:16px 24px 0;background:var(--card);border-bottom:1px solid var(--border);position:sticky;top:46px;z-index:90}
+.tab{padding:8px 16px;border-radius:8px 8px 0 0;font-size:12.5px;font-weight:600;cursor:pointer;border:1px solid transparent;border-bottom:none;background:none;color:var(--muted);transition:all .15s}
+.tab.active{background:var(--bg);border-color:var(--border);color:var(--text)}
+.tab-content{display:none;padding:24px}
+.tab-content.active{display:block}
+.sec-title{font-size:17px;font-weight:700;margin-bottom:4px}
+.sec-sub{font-size:12px;color:var(--muted);margin-bottom:20px;max-width:720px;line-height:1.6}
+.phases{display:flex;gap:0;margin-bottom:24px;border-radius:12px;overflow:hidden;border:1px solid var(--border)}
+.phase{flex:1;padding:14px 16px;display:flex;flex-direction:column;gap:4px;border-right:1px solid var(--border);position:relative}
+.phase:last-child{border-right:none}
+.phase-num{font-size:10px;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:.6px}
+.phase-name{font-size:13px;font-weight:700}
+.phase-desc{font-size:11px;color:var(--muted);line-height:1.5}
+.phase-arrow{position:absolute;right:-10px;top:50%;transform:translateY(-50%);font-size:18px;color:#CCC;z-index:1}
+.ph-blue{background:var(--blue-bg)}.ph-blue .phase-name{color:var(--blue-dk)}
+.ph-amber{background:var(--amber-bg)}.ph-amber .phase-name{color:var(--amber-dk)}
+.ph-green{background:var(--green-bg)}.ph-green .phase-name{color:var(--green-dk)}
+.flow-wrap{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:24px;overflow-x:auto}
+.change-section{margin-bottom:28px}
+.change-title{font-size:14px;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:8px;white-space:nowrap}
+.badge-new{background:#dcfce7;color:#166534}
+.badge-mod{background:#fef9c3;color:#854d0e}
+.badge-del{background:#fee2e2;color:#991b1b}
+.badge-same{background:#f1f5f9;color:#475569}
+table.ct{width:100%;border-collapse:collapse;font-size:12px}
+table.ct th{background:var(--bg);border:1px solid var(--border);padding:8px 10px;font-weight:600;color:var(--muted);text-align:left}
+table.ct td{border:1px solid var(--border);padding:8px 10px;background:var(--card);vertical-align:top;line-height:1.55}
+table.ct tr:hover td{background:#FAFAF8}
+table.ct tr.new-row td{background:#FEFCE8}
+.col-name{font-family:monospace;font-size:11px;background:#F1F5F9;padding:2px 6px;border-radius:4px;white-space:nowrap;color:#1E40AF}
+.flow-name{font-family:monospace;font-size:11px;background:#F5F3FF;padding:2px 6px;border-radius:4px;white-space:nowrap;color:#5B21B6}
+.callout{border-radius:10px;padding:14px 16px;margin-bottom:14px;display:flex;gap:10px;align-items:flex-start;font-size:12px;line-height:1.6}
+.callout-icon{font-size:16px;flex-shrink:0;margin-top:1px}
+.callout-red{background:var(--red-bg);border-left:3px solid var(--red)}
+.callout-green{background:var(--green-bg);border-left:3px solid var(--green)}
+.callout-amber{background:var(--amber-bg);border-left:3px solid var(--amber)}
+.callout-blue{background:var(--blue-bg);border-left:3px solid var(--blue)}
+.wb-box{background:#1C1B18;color:#fff;border-radius:10px;padding:16px 20px;margin-bottom:20px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.wb-col{border-left:3px solid;padding-left:12px}
+.wb-intro{padding-right:8px}
+.wb-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px}
+.wb-field{font-family:monospace;font-size:11px;color:#D1D5DB;margin-bottom:3px}
+.wb-field span{color:#F9D84B}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-title">License<span>Flow</span></div>
+  <div class="topbar-sub">System Design v2 — Request → Purchase Write-Back → License Management → Lifecycle (Movement + Expiry Action)</div>
+  <a href="index.html" style="margin-left:auto;font-size:11px;color:#9CA3AF;text-decoration:none">← กลับ Hub</a>
+</div>
+
+<div class="tab-bar">
+  <button class="tab active" onclick="switchTab('flow',this)">🔄 Flow Diagram</button>
+  <button class="tab" onclick="switchTab('sharepoint',this)">🗄️ SharePoint</button>
+  <button class="tab" onclick="switchTab('automate',this)">⚡ Power Automate</button>
+  <button class="tab" onclick="switchTab('apps',this)">📱 Power Apps</button>
+  <button class="tab" onclick="switchTab('lifecycle',this)">🔁 License Lifecycle</button>
+  <button class="tab" onclick="switchTab('junk',this)">🧹 ตัดออก</button>
+</div>
+
+<!-- ═══ TAB: FLOW ═══ -->
+<div class="tab-content active" id="tab-flow">
+  <div class="sec-title">🔄 New System Flow — v2</div>
+  <div class="sec-sub">จุดเริ่มต้นคือ <strong>User ยื่น Request</strong> ในระบบ — หลังอนุมัติ แต่ละเส้นทางต้อง <strong>write reference number กลับ SharePoint</strong> ก่อนที่ License Management จะทำงานได้</div>
+
+  <div class="phases">
+    <div class="phase ph-blue">
+      <div class="phase-num">Phase 1</div>
+      <div class="phase-name">Request & Approval</div>
+      <div class="phase-desc">Employee กรอก Form → Flow ส่ง Approval → Manager อนุมัติ/ปฏิเสธ</div>
+      <div class="phase-arrow">›</div>
+    </div>
+    <div class="phase ph-amber">
+      <div class="phase-num">Phase 2a / 2b</div>
+      <div class="phase-name">Purchase + Write-Back</div>
+      <div class="phase-desc">PR/PO → จัดซื้อ → เขียน PO# กลับ SP<br>Corporate Card → ชำระ → เขียน CC ID กลับ SP</div>
+      <div class="phase-arrow">›</div>
+    </div>
+    <div class="phase ph-green">
+      <div class="phase-num">Phase 3</div>
+      <div class="phase-name">License Management</div>
+      <div class="phase-desc">Flow trigger → HR/IT assign License → Monitor รายวัน → Renew</div>
+    </div>
+  </div>
+
+  <div class="wb-box">
+    <div class="wb-intro">
+      <div style="font-size:11px;color:#9CA3AF;margin-bottom:8px">🔑 KEY CONCEPT</div>
+      <div style="font-size:13px;color:#fff;font-weight:700;margin-bottom:6px">Write-Back to SharePoint</div>
+      <div style="font-size:12px;color:#D1D5DB;line-height:1.7">Phase 3 จะ unlock ได้ก็ต่อเมื่อ <span style="color:#F9D84B;font-family:monospace">PurchaseStatus = "Completed"</span> ซึ่ง set ได้ก็ต่อเมื่อแผนกกรอก reference กลับมาในระบบแล้วเท่านั้น</div>
+    </div>
+    <div class="wb-col" style="border-color:var(--amber)">
+      <div class="wb-label" style="color:var(--amber)">Path A — PR/PO</div>
+      <div class="wb-field">กรอก: <span>PONumber</span></div>
+      <div class="wb-field">set: <span>PurchaseStatus</span> = "Completed"</div>
+      <div style="font-size:11px;color:#6B7280;margin-top:6px">ใครกรอก: HR/IT Admin<br>(รับข้อมูลจากแผนกจัดซื้อ)<br>ผ่าน: Power Apps Admin Screen</div>
+    </div>
+    <div class="wb-col" style="border-color:var(--purple)">
+      <div class="wb-label" style="color:#C4B5FD">Path B — Corporate Card</div>
+      <div class="wb-field">กรอก: <span>CCRefID</span></div>
+      <div class="wb-field">set: <span>PurchaseStatus</span> = "Completed"</div>
+      <div style="font-size:11px;color:#6B7280;margin-top:6px">ใครกรอก: HR/IT Admin<br>(รับข้อมูลจากแผนกการเงิน)<br>ผ่าน: Power Apps Admin Screen</div>
+    </div>
+  </div>
+
+  <div class="flow-wrap">
+    <svg viewBox="0 0 980 740" width="100%" style="max-width:940px" xmlns="http://www.w3.org/2000/svg" font-family="system-ui,sans-serif" font-size="12">
+      <defs>
+        <marker id="arr"  viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0L8,4L0,8z" fill="#555"/></marker>
+        <marker id="arrG" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0L8,4L0,8z" fill="#1D9E75"/></marker>
+        <marker id="arrR" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0L8,4L0,8z" fill="#DC2626"/></marker>
+        <marker id="arrA" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0L8,4L0,8z" fill="#D97706"/></marker>
+        <marker id="arrP" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0L8,4L0,8z" fill="#7C3AED"/></marker>
+      </defs>
+
+      <!-- Phase backgrounds -->
+      <rect x="8" y="8"   width="964" height="100" rx="8" fill="#EBF4FF" stroke="#BFDBFE" stroke-width="1"/>
+      <text x="20" y="26" font-size="10" font-weight="700" fill="#1E40AF" letter-spacing=".5">PHASE 1 — REQUEST &amp; APPROVAL</text>
+      <rect x="8" y="120" width="964" height="250" rx="8" fill="#FFFBEB" stroke="#FDE68A" stroke-width="1"/>
+      <text x="20" y="138" font-size="10" font-weight="700" fill="#854D0E" letter-spacing=".5">PHASE 2 — PURCHASE + WRITE-BACK</text>
+      <rect x="8" y="383" width="964" height="200" rx="8" fill="#ECFDF5" stroke="#A7F3D0" stroke-width="1"/>
+      <text x="20" y="401" font-size="10" font-weight="700" fill="#065F46" letter-spacing=".5">PHASE 3 — LICENSE MANAGEMENT</text>
+
+      <!-- PHASE 1 -->
+      <ellipse cx="72" cy="62" rx="52" ry="24" fill="#1C1B18"/>
+      <text x="72" y="58"  text-anchor="middle" fill="#fff" font-weight="700" font-size="12">เริ่มต้น</text>
+      <text x="72" y="73"  text-anchor="middle" fill="#9CA3AF" font-size="10">Employee</text>
+      <line x1="124" y1="62" x2="148" y2="62" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+
+      <rect x="150" y="40" width="145" height="44" rx="8" fill="#2B7DE9" stroke="#1E5F9C" stroke-width="1.5"/>
+      <text x="222" y="58"  text-anchor="middle" fill="#fff" font-weight="700">1. กรอก Request Form</text>
+      <text x="222" y="73"  text-anchor="middle" fill="#BFDBFE" font-size="11">Power Apps · เลือก PaymentMethod</text>
+      <line x1="295" y1="62" x2="319" y2="62" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+
+      <rect x="321" y="40" width="145" height="44" rx="8" fill="#1D9E75" stroke="#0F6E56" stroke-width="1.5"/>
+      <text x="393" y="58"  text-anchor="middle" fill="#fff" font-weight="700">2. บันทึก SP List</text>
+      <text x="393" y="73"  text-anchor="middle" fill="#A7F3D0" font-size="11">ApprovalRequests · Status:Pending</text>
+      <line x1="466" y1="62" x2="490" y2="62" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+
+      <rect x="492" y="40" width="145" height="44" rx="8" fill="#7C3AED" stroke="#5B21B6" stroke-width="1.5"/>
+      <text x="564" y="58"  text-anchor="middle" fill="#fff" font-weight="700">3. Flow ส่ง Approval</text>
+      <text x="564" y="73"  text-anchor="middle" fill="#DDD6FE" font-size="11">Email → Manager พิจารณา</text>
+      <line x1="637" y1="62" x2="661" y2="62" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+
+      <!-- Decision: Approve? -->
+      <polygon points="724,38 790,62 724,86 658,62" fill="#FEF3C7" stroke="#D97706" stroke-width="2"/>
+      <text x="724" y="57"  text-anchor="middle" font-weight="700" font-size="12">อนุมัติ?</text>
+      <text x="724" y="72"  text-anchor="middle" font-size="11" fill="#92400E">Approve?</text>
+
+      <!-- Reject -->
+      <line x1="790" y1="62" x2="870" y2="62" stroke="#DC2626" stroke-width="1.5" marker-end="url(#arrR)"/>
+      <text x="830" y="54"  text-anchor="middle" fill="#DC2626" font-size="11" font-weight="700">ปฏิเสธ</text>
+      <rect x="870" y="40" width="96" height="44" rx="8" fill="#FEE2E2" stroke="#DC2626" stroke-width="1.5"/>
+      <text x="918" y="58"  text-anchor="middle" fill="#991B1B" font-weight="700">แจ้งผลปฏิเสธ</text>
+      <text x="918" y="74"  text-anchor="middle" fill="#991B1B" font-size="11">Email พนักงาน 🔚</text>
+
+      <!-- Approved → down -->
+      <line x1="724" y1="86" x2="724" y2="115" stroke="#1D9E75" stroke-width="2" marker-end="url(#arrG)"/>
+      <text x="735" y="105" fill="#1D9E75" font-size="11" font-weight="700">อนุมัติ ✓</text>
+
+      <!-- PHASE 2: Decision PaymentMethod -->
+      <polygon points="724,130 796,158 724,186 652,158" fill="#FEF3C7" stroke="#D97706" stroke-width="2"/>
+      <text x="724" y="154" text-anchor="middle" font-weight="700" font-size="12">Payment</text>
+      <text x="724" y="170" text-anchor="middle" font-size="11" fill="#92400E">Method?</text>
+
+      <!-- Path A: PR/PO -->
+      <line x1="652" y1="158" x2="510" y2="158" stroke="#D97706" stroke-width="2" marker-end="url(#arrA)"/>
+      <text x="580" y="150" text-anchor="middle" fill="#D97706" font-size="11" font-weight="700">PR / PO</text>
+      <rect x="360" y="136" width="145" height="44" rx="8" fill="#D97706" stroke="#A07810" stroke-width="1.5"/>
+      <text x="432" y="154" text-anchor="middle" fill="#fff" font-weight="700">แผนกจัดซื้อ</text>
+      <text x="432" y="169" text-anchor="middle" fill="#FEF3C7" font-size="11">ออก PO · ติดต่อ Vendor</text>
+      <line x1="432" y1="180" x2="432" y2="208" stroke="#D97706" stroke-width="2" marker-end="url(#arrA)"/>
+      <!-- Write-back PO box -->
+      <rect x="342" y="208" width="180" height="54" rx="8" fill="#1C1B18" stroke="#D97706" stroke-width="2.5"/>
+      <text x="432" y="227" text-anchor="middle" fill="#FCD34D" font-weight="700" font-size="12">⬆ Write-Back: PO Number</text>
+      <text x="432" y="243" text-anchor="middle" fill="#D1D5DB" font-size="11">PONumber = "PO-XXXX"</text>
+      <text x="432" y="256" text-anchor="middle" fill="#D1D5DB" font-size="11">PurchaseStatus = "Completed"</text>
+      <line x1="432" y1="262" x2="432" y2="290" stroke="#555" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arr)"/>
+      <rect x="342" y="290" width="180" height="36" rx="6" fill="#374151" stroke="#4B5563" stroke-width="1"/>
+      <text x="432" y="305" text-anchor="middle" fill="#9CA3AF" font-size="11">Flow 2 detect Completed</text>
+      <text x="432" y="319" text-anchor="middle" fill="#D1D5DB" font-size="11">→ Notify HR/IT Admin</text>
+
+      <!-- Path B: Corporate Card -->
+      <line x1="796" y1="158" x2="858" y2="158" stroke="#7C3AED" stroke-width="2" marker-end="url(#arrP)"/>
+      <text x="827" y="150" text-anchor="middle" fill="#7C3AED" font-size="11" font-weight="700">Corp Card</text>
+      <rect x="860" y="136" width="108" height="44" rx="8" fill="#7C3AED" stroke="#5B21B6" stroke-width="1.5"/>
+      <text x="914" y="154" text-anchor="middle" fill="#fff" font-weight="700">แผนกการเงิน</text>
+      <text x="914" y="169" text-anchor="middle" fill="#DDD6FE" font-size="11">ชำระบัตรองค์กร</text>
+      <line x1="914" y1="180" x2="914" y2="208" stroke="#7C3AED" stroke-width="2" marker-end="url(#arrP)"/>
+      <!-- Write-back CC box -->
+      <rect x="824" y="208" width="180" height="54" rx="8" fill="#1C1B18" stroke="#7C3AED" stroke-width="2.5"/>
+      <text x="914" y="227" text-anchor="middle" fill="#C4B5FD" font-weight="700" font-size="12">⬆ Write-Back: CC Ref ID</text>
+      <text x="914" y="243" text-anchor="middle" fill="#D1D5DB" font-size="11">CCRefID = "TXN-XXXX"</text>
+      <text x="914" y="256" text-anchor="middle" fill="#D1D5DB" font-size="11">PurchaseStatus = "Completed"</text>
+      <line x1="914" y1="262" x2="914" y2="290" stroke="#555" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arr)"/>
+      <rect x="824" y="290" width="180" height="36" rx="6" fill="#374151" stroke="#4B5563" stroke-width="1"/>
+      <text x="914" y="305" text-anchor="middle" fill="#9CA3AF" font-size="11">Flow 2 detect Completed</text>
+      <text x="914" y="319" text-anchor="middle" fill="#D1D5DB" font-size="11">→ Notify HR/IT Admin</text>
+
+      <!-- Merge lines to Phase 3 -->
+      <line x1="432" y1="326" x2="432" y2="378" stroke="#555" stroke-width="1.5"/>
+      <line x1="914" y1="326" x2="914" y2="360" stroke="#555" stroke-width="1.5"/>
+      <line x1="432" y1="378" x2="914" y2="378" stroke="#555" stroke-width="1.5"/>
+      <line x1="673" y1="378" x2="673" y2="386" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+      <text x="673" y="375" text-anchor="middle" fill="#6B7280" font-size="10">รวม path</text>
+
+      <!-- PHASE 3 -->
+      <rect x="566" y="394" width="160" height="48" rx="8" fill="#1D9E75" stroke="#0F6E56" stroke-width="1.5"/>
+      <text x="646" y="414" text-anchor="middle" fill="#fff" font-weight="700">HR/IT Admin กรอก</text>
+      <text x="646" y="430" text-anchor="middle" fill="#A7F3D0" font-size="11">License Key + ExpiryDate + PurchaseRef</text>
+
+      <line x1="726" y1="418" x2="754" y2="418" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+
+      <rect x="756" y="394" width="160" height="48" rx="8" fill="#0891B2" stroke="#0E7490" stroke-width="1.5"/>
+      <text x="836" y="414" text-anchor="middle" fill="#fff" font-weight="700">บันทึก Licenses List</text>
+      <text x="836" y="430" text-anchor="middle" fill="#BAE6FD" font-size="11">Status:Active · RequestRef แนบด้วย</text>
+
+      <line x1="836" y1="442" x2="836" y2="462" stroke="#555" stroke-width="1.5"/>
+      <line x1="646" y1="442" x2="646" y2="462" stroke="#555" stroke-width="1.5"/>
+      <line x1="646" y1="462" x2="836" y2="462" stroke="#555" stroke-width="1.5"/>
+      <line x1="741" y1="462" x2="741" y2="470" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+
+      <rect x="566" y="470" width="350" height="38" rx="8" fill="#374151" stroke="#4B5563" stroke-width="1"/>
+      <text x="741" y="485" text-anchor="middle" fill="#9CA3AF" font-size="11">Flow แจ้ง Employee: License พร้อมใช้งาน</text>
+      <text x="741" y="500" text-anchor="middle" fill="#D1D5DB" font-size="11">→ ระบบเริ่ม Expiry Monitoring รายวัน</text>
+
+      <!-- Monitoring box (left) -->
+      <rect x="60" y="394" width="200" height="114" rx="8" fill="#065F46" stroke="#059669" stroke-width="1.5" stroke-dasharray="5,3"/>
+      <text x="160" y="416" text-anchor="middle" fill="#A7F3D0" font-weight="700">⏱ Expiry Monitor</text>
+      <text x="160" y="432" text-anchor="middle" fill="#6EE7B7" font-size="11">(Recurring · ทุกวัน 08:00)</text>
+      <text x="160" y="450" text-anchor="middle" fill="#6EE7B7" font-size="11">ExpiryDate ≤ 30 วัน</text>
+      <text x="160" y="466" text-anchor="middle" fill="#FCD34D" font-size="11">→ แจ้งเตือน HR + Manager</text>
+      <text x="160" y="482" text-anchor="middle" fill="#6EE7B7" font-size="11">ExpiryDate = Today()</text>
+      <text x="160" y="498" text-anchor="middle" fill="#FCA5A5" font-size="11">→ Status = "Expired" + Log</text>
+
+      <!-- Legend -->
+      <rect x="8" y="710" width="964" height="26" rx="6" fill="#F8F7F4" stroke="#E2E0D8" stroke-width="1"/>
+      <text x="20" y="727" fill="#555" font-size="11" font-weight="600">Legend:</text>
+      <rect x="78" y="718" width="14" height="10" rx="3" fill="#2B7DE9"/><text x="96" y="727" fill="#555" font-size="11">Activity</text>
+      <polygon points="172,727 186,717 200,727 186,737" fill="#FEF3C7" stroke="#D97706" stroke-width="1.5"/><text x="208" y="727" fill="#555" font-size="11">Decision</text>
+      <rect x="290" y="718" width="14" height="10" rx="3" fill="#1C1B18" stroke="#D97706" stroke-width="2"/><text x="308" y="727" fill="#555" font-size="11">Write-Back (critical)</text>
+      <line x1="445" y1="723" x2="468" y2="723" stroke="#555" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arr)"/><text x="474" y="727" fill="#555" font-size="11">Auto / Flow trigger</text>
+      <rect x="595" y="718" width="14" height="10" rx="3" fill="#065F46" stroke="#059669" stroke-width="1.5" stroke-dasharray="4,3"/><text x="613" y="727" fill="#555" font-size="11">Recurring (ตลอดเวลา)</text>
+    </svg>
+  </div>
+</div>
+
+<!-- ═══ TAB: SHAREPOINT ═══ -->
+<div class="tab-content" id="tab-sharepoint">
+  <div class="sec-title">🗄️ SharePoint — สิ่งที่ต้องแก้ไข</div>
+  <div class="sec-sub">เพิ่ม column ใน 2 lists เท่านั้น ไม่มี List ใดที่ต้องลบหรือสร้างใหม่</div>
+
+  <div class="callout callout-amber">
+    <div class="callout-icon">⚠️</div>
+    <div><strong>ปัญหาในแบบเดิม:</strong> ไม่มี column รองรับ Write-Back จากแผนกจัดซื้อ/การเงิน ทำให้ License Management ไม่รู้ว่าจ่ายเงินแล้วหรือยัง และไม่มี audit trail ว่าซื้อผ่านช่องทางไหน</div>
+  </div>
+
+  <div class="change-section">
+    <div class="change-title">📋 <code style="font-size:13px">ApprovalRequests</code> <span class="badge badge-mod">เพิ่ม 5 columns</span></div>
+    <table class="ct">
+      <tr><th style="width:190px">Column</th><th style="width:130px">Type</th><th style="width:80px">Required</th><th style="width:90px">สถานะ</th><th>หมายเหตุ</th></tr>
+      <tr><td><span class="col-name">Title</span></td><td>Single line</td><td>✅</td><td><span class="badge badge-same">เดิม</span></td><td>ชื่อซอฟต์แวร์ที่ขอ</td></tr>
+      <tr><td><span class="col-name">RequestedBy</span></td><td>Person</td><td>✅</td><td><span class="badge badge-same">เดิม</span></td><td>พนักงานที่ยื่นคำขอ</td></tr>
+      <tr><td><span class="col-name">SoftwareRef</span></td><td>Lookup → SoftwareCatalog</td><td>✅</td><td><span class="badge badge-same">เดิม</span></td><td>ซอฟต์แวร์ที่ต้องการ</td></tr>
+      <tr><td><span class="col-name">LicenseQty</span></td><td>Number</td><td>✅</td><td><span class="badge badge-same">เดิม</span></td><td>จำนวน License ที่ขอ</td></tr>
+      <tr><td><span class="col-name">Justification</span></td><td>Multi-line</td><td>✅</td><td><span class="badge badge-same">เดิม</span></td><td>เหตุผลที่ต้องการ</td></tr>
+      <tr><td><span class="col-name">ApprovalStatus</span></td><td>Choice</td><td>✅</td><td><span class="badge badge-same">เดิม</span></td><td>Pending / Approved / Rejected</td></tr>
+      <tr class="new-row"><td><span class="col-name">PaymentMethod</span></td><td>Choice</td><td>✅</td><td><span class="badge badge-new">เพิ่มใหม่</span></td><td>Choices: <strong>PR/PO</strong>, <strong>Corporate Card</strong> — พนักงานเลือกตอน submit form</td></tr>
+      <tr class="new-row"><td><span class="col-name">PONumber</span></td><td>Single line</td><td>❌</td><td><span class="badge badge-new">เพิ่มใหม่</span></td><td>เลข PO — HR/IT Admin <strong>write-back</strong> หลังจัดซื้อ PR/PO เสร็จ (ว่างไว้ก่อน)</td></tr>
+      <tr class="new-row"><td><span class="col-name">CCRefID</span></td><td>Single line</td><td>❌</td><td><span class="badge badge-new">เพิ่มใหม่</span></td><td>Transaction ID บัตรองค์กร — HR/IT Admin <strong>write-back</strong> หลังชำระเสร็จ</td></tr>
+      <tr class="new-row"><td><span class="col-name">PurchaseStatus</span></td><td>Choice</td><td>✅</td><td><span class="badge badge-new">เพิ่มใหม่</span></td><td><strong>Pending → In Process → Completed → Cancelled</strong> — Flow 2 trigger เมื่อ = "Completed"</td></tr>
+      <tr class="new-row"><td><span class="col-name">PurchaseCompletedDate</span></td><td>Date</td><td>❌</td><td><span class="badge badge-new">เพิ่มใหม่</span></td><td>วันที่จัดซื้อเสร็จ — กรอกพร้อม PONumber หรือ CCRefID</td></tr>
+    </table>
+  </div>
+
+  <div class="change-section">
+    <div class="change-title">🔑 <code style="font-size:13px">Licenses</code> <span class="badge badge-mod">เพิ่ม 2 columns</span></div>
+    <table class="ct">
+      <tr><th style="width:190px">Column</th><th style="width:130px">Type</th><th style="width:80px">Required</th><th style="width:90px">สถานะ</th><th>หมายเหตุ</th></tr>
+      <tr><td><span class="col-name">Title</span></td><td>Single line</td><td>✅</td><td><span class="badge badge-same">เดิม</span></td><td>ชื่อ License</td></tr>
+      <tr><td><span class="col-name">SoftwareRef</span></td><td>Lookup</td><td>✅</td><td><span class="badge badge-same">เดิม</span></td><td>—</td></tr>
+      <tr><td><span class="col-name">AssignedTo</span></td><td>Person</td><td>✅</td><td><span class="badge badge-same">เดิม</span></td><td>ผู้ใช้งาน</td></tr>
+      <tr><td><span class="col-name">LicenseKey</span></td><td>Single line</td><td>✅</td><td><span class="badge badge-same">เดิม</span></td><td>Key / Seat ID</td></tr>
+      <tr><td><span class="col-name">ExpiryDate</span></td><td>Date</td><td>✅</td><td><span class="badge badge-same">เดิม</span></td><td>Flow ตรวจทุกวัน</td></tr>
+      <tr><td><span class="col-name">Status</span></td><td>Choice</td><td>✅</td><td><span class="badge badge-same">เดิม</span></td><td>Active / Expired / Cancelled / Renewed</td></tr>
+      <tr class="new-row"><td><span class="col-name">RequestRef</span></td><td>Lookup → ApprovalRequests</td><td>✅</td><td><span class="badge badge-new">เพิ่มใหม่</span></td><td>Link กลับ Request เดิม — trace ได้ว่า License นี้มาจากคำขอไหน</td></tr>
+      <tr class="new-row"><td><span class="col-name">PurchaseRef</span></td><td>Single line</td><td>✅</td><td><span class="badge badge-new">เพิ่มใหม่</span></td><td>Copy ค่า PONumber หรือ CCRefID มาเก็บไว้ด้วย — ดูได้โดยตรงไม่ต้อง lookup</td></tr>
+      <tr><td colspan="5" style="background:#FFF7ED;color:#92400E;font-weight:700;font-size:11px;letter-spacing:.4px">🔁 LICENSE LIFECYCLE — Priority 0 (Resign/Transfer + Expiry Action)</td></tr>
+      <tr class="new-row"><td><span class="col-name">MovementStatus</span></td><td>Choice</td><td>❌</td><td><span class="badge badge-new">เพิ่มใหม่</span></td><td>Choices: <strong>Active / Transferred / Returned to Pool / Cancelled</strong> — default "Active" ใช้ track ว่า license หลุดลอยหรือไม่</td></tr>
+      <tr class="new-row"><td><span class="col-name">MovementReason</span></td><td>Choice</td><td>❌</td><td><span class="badge badge-new">เพิ่มใหม่</span></td><td>Choices: <strong>Resign / Transfer / Other</strong> — กรอกเมื่อ IT Admin ดำเนินการ Movement</td></tr>
+      <tr class="new-row"><td><span class="col-name">TransferredTo</span></td><td>Person</td><td>❌</td><td><span class="badge badge-new">เพิ่มใหม่</span></td><td>กรอกเมื่อเลือก Action = "Transfer" — ระบุว่าโอน License ให้ใคร</td></tr>
+      <tr class="new-row"><td><span class="col-name">ExpiryAction</span></td><td>Choice</td><td>❌</td><td><span class="badge badge-new">เพิ่มใหม่</span></td><td>Choices: <strong>Not Set / Renew / Cancel / Transfer</strong> — Manager หรือ IT Admin เลือกใน Power Apps เมื่อได้รับ Expiry Alert</td></tr>
+      <tr class="new-row"><td><span class="col-name">ExpiryActionStatus</span></td><td>Choice</td><td>❌</td><td><span class="badge badge-new">เพิ่มใหม่</span></td><td>Choices: <strong>Not Required / Pending Decision / Action Required / Done</strong> — Flow 3 set = "Pending Decision" เมื่อ 30 วันก่อนหมด</td></tr>
+      <tr class="new-row"><td><span class="col-name">ExpiryActionBy</span></td><td>Person</td><td>❌</td><td><span class="badge badge-new">เพิ่มใหม่</span></td><td>IT Admin ที่รับผิดชอบ Cancel/Renew ที่ Vendor Portal จริงๆ — บันทึกเพื่อ accountability</td></tr>
+    </table>
+  </div>
+
+  <div class="change-section">
+    <div class="change-title">📚 <code style="font-size:13px">SoftwareCatalog</code> &amp; <code style="font-size:13px">LicenseHistory</code> <span class="badge badge-same">ไม่ต้องแก้</span></div>
+    <div class="callout callout-green">
+      <div class="callout-icon">✅</div>
+      <div>ทั้งสอง List ใช้ได้เลย SoftwareCatalog เป็น master data คงเดิม LicenseHistory รับ log จาก Flow 2 และ Flow 3 อัตโนมัติ ไม่ต้องสร้าง column เพิ่ม</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ TAB: POWER AUTOMATE ═══ -->
+<div class="tab-content" id="tab-automate">
+  <div class="sec-title">⚡ Power Automate — 4 Flows</div>
+  <div class="sec-sub">4 Flows ที่ชัดเจน แต่ละ Flow มีหน้าที่เดียว — Flow 1–2: Request/Purchase, Flow 3: Expiry Action, Flow 4: License Movement (Priority 0)</div>
+  <div class="callout callout-red" style="margin-bottom:16px">
+    <div class="callout-icon">🎯</div>
+    <div><strong>Priority 0 — Core Requirement:</strong> Flow 3 (Expiry Action) และ Flow 4 (License Movement) คือ Requirement หลักที่ได้รับมอบหมาย ไม่ใช่แค่ nice-to-have เรื่อง Resign/Transfer license ต้องไม่หลุดลอย และ Expiry ต้องมี Action จริงๆ ไม่ใช่แค่แจ้งเตือน</div>
+  </div>
+
+  <div class="callout callout-green">
+    <div class="callout-icon">✅</div>
+    <div><strong>หลักการ:</strong> 1 Flow = 1 หน้าที่ ไม่ combine notification หลายอย่างในที่เดียว และไม่แยก Flow สำหรับทุก notification เล็กๆ ใช้ branch ใน Flow เดิมแทน</div>
+  </div>
+
+  <div class="change-section">
+    <div class="change-title">⚡ <span class="flow-name">Flow 1 — Request &amp; Approval</span> <span class="badge badge-mod">ปรับ — เพิ่ม PaymentMethod routing</span></div>
+    <table class="ct">
+      <tr><th style="width:80px">Step</th><th>Action</th><th style="width:200px">หมายเหตุ</th></tr>
+      <tr><td>Trigger</td><td>PowerApps V2 trigger</td><td>รับข้อมูลจาก Request Form</td></tr>
+      <tr><td>1</td><td>Create item → <span class="col-name">ApprovalRequests</span> (รวมถึง PaymentMethod, PurchaseStatus="Pending")</td><td>—</td></tr>
+      <tr><td>2</td><td>Start and wait for an approval → ส่งให้ Manager</td><td>"Approve/Reject – First to respond"</td></tr>
+      <tr><td>3a ✅</td><td>If Approved: Update item → ApprovalStatus="Approved", PurchaseStatus="In Process"</td><td>—</td></tr>
+      <tr><td>3b ✅</td><td>Switch(PaymentMethod):<br>· "PR/PO" → Send Email แผนกจัดซื้อ + link Power Apps Admin<br>· "Corporate Card" → Send Email แผนกการเงิน + link Power Apps Admin</td><td>Email แนบรายละเอียด Request + link กรอก write-back</td></tr>
+      <tr><td>4a ❌</td><td>If Rejected: Update item → ApprovalStatus="Rejected", PurchaseStatus="Cancelled"</td><td>—</td></tr>
+      <tr><td>4b ❌</td><td>Send Email to Employee (แจ้งผลปฏิเสธ + comments)</td><td>ดึง Comments จาก Approval response</td></tr>
+    </table>
+  </div>
+
+  <div class="change-section">
+    <div class="change-title">⚡ <span class="flow-name">Flow 2 — Purchase Complete Trigger</span> <span class="badge badge-new">ใหม่ (แทน Flow 4+5 เดิม)</span></div>
+    <div class="callout callout-amber" style="margin-bottom:10px">
+      <div class="callout-icon">🔑</div>
+      <div>นี่คือ <strong>Write-Back Listener</strong> — คอยดูว่าเมื่อไหร่ PurchaseStatus เปลี่ยนเป็น "Completed" แล้วเริ่ม Phase 3 ทันที</div>
+    </div>
+    <table class="ct">
+      <tr><th style="width:80px">Step</th><th>Action</th><th style="width:200px">หมายเหตุ</th></tr>
+      <tr><td>Trigger</td><td>When an item is modified → <span class="col-name">ApprovalRequests</span></td><td>—</td></tr>
+      <tr><td>1</td><td>Condition: PurchaseStatus eq 'Completed' → ถ้าไม่ใช่ Terminate</td><td>กัน Flow ทำงานโดยไม่จำเป็น</td></tr>
+      <tr><td>2</td><td>Get item → ดึงข้อมูลล่าสุด (PONumber หรือ CCRefID)</td><td>—</td></tr>
+      <tr><td>3</td><td>Send Email to HR/IT Admin: "คำขอ [Title] จัดซื้อเสร็จแล้ว กรุณา assign License"<br>แนบ: Reference = <code>if(empty(PONumber), CCRefID, PONumber)</code></td><td>Link ไปหน้า Admin Power Apps</td></tr>
+      <tr><td>4</td><td>Create item → <span class="col-name">LicenseHistory</span> (Action="Purchase Completed", Reference=PONumber หรือ CCRefID)</td><td>audit trail</td></tr>
+    </table>
+  </div>
+
+  <div class="change-section">
+    <div class="change-title">⚡ <span class="flow-name">Flow 3 — Expiry Action Flow</span> <span class="badge badge-mod">อัปเกรด — จาก "แค่แจ้งเตือน" เป็น "บังคับให้ตัดสินใจ"</span></div>
+    <div class="callout callout-red" style="margin-bottom:10px">
+      <div class="callout-icon">🎯</div>
+      <div><strong>Priority 0:</strong> Expired ≠ แค่ส่ง Email แล้วจบ — ต้องมี Task ที่ IT Admin ต้อง Action จริงๆ (ไปยกเลิก/ต่ออายุที่ Vendor Portal) และต้องมีคนรับผิดชอบชัดเจน ไม่ใช่แค่ "ส่งเมลแจ้ง"</div>
+    </div>
+    <table class="ct">
+      <tr><th style="width:80px">Step</th><th>Action</th><th style="width:220px">หมายเหตุ</th></tr>
+      <tr><td>Trigger</td><td>Recurrence — ทุกวัน 08:00 น.</td><td>—</td></tr>
+      <tr><td>1</td><td>Get items → Licenses (filter: Status eq 'Active' and ExpiryAction ne 'Done')</td><td>กัน License ที่ตัดสินใจแล้ว</td></tr>
+      <tr><td>2</td><td>Apply to each: คำนวณ DaysLeft<br><code style="font-size:11px">div(sub(ticks(ExpiryDate),ticks(utcNow())),864000000000)</code></td><td>—</td></tr>
+      <tr><td>3a</td><td><strong>DaysLeft = 30:</strong> Update ExpiryActionStatus="Pending Decision"<br>→ Send Email: License Owner + Manager + IT Admin<br>→ เนื้อหา: "License [Name] หมดอายุใน 30 วัน กรุณาเลือก [ต่ออายุ / ยกเลิก / โอนย้าย] ผ่าน Power Apps ภายใน 7 วัน"</td><td>Email มี link ตรงไปหน้า Admin ของ Power Apps</td></tr>
+      <tr><td>3b</td><td><strong>DaysLeft = 7 และ ExpiryActionStatus = "Pending Decision":</strong><br>→ Escalate ส่ง Email ซ้ำ IT Admin + Manager: "ยังไม่มีการตัดสินใจ License จะหมดใน 7 วัน"</td><td>กันกรณีที่ไม่มีใค Action เลย</td></tr>
+      <tr><td>3c</td><td><strong>DaysLeft = 1 และ ExpiryActionStatus ≠ "Done":</strong><br>→ Update ExpiryActionStatus="Action Required"<br>→ Send Email IT Admin: "License หมดพรุ่งนี้ — ดำเนินการที่ Vendor Portal ทันที"</td><td>IT Admin คือคนที่ต้องลงมือจริงที่ Vendor Portal</td></tr>
+      <tr><td>4</td><td><strong>DaysLeft ≤ 0:</strong> Update Status="Expired"<br>→ Create LicenseHistory log (Action="Expired")<br>→ Send Email IT Admin: "License [Name] หมดอายุแล้ว — ยืนยันการดำเนินการที่ Vendor Portal และ mark Done ใน Power Apps"</td><td>ถ้ายังไม่ Cancel ที่ Vendor = อาจถูก Auto-renew และเสียเงิน</td></tr>
+    </table>
+    <div class="callout callout-blue" style="margin-top:10px">
+      <div class="callout-icon">👤</div>
+      <div><strong>ใครมีอำนาจเข้า Vendor Portal:</strong> <strong>IT Admin เท่านั้น</strong> — เพราะ License ผูกกับ Billing Email ของบริษัท (ไม่ใช่ Email พนักงาน) Manager มีอำนาจ <em>ตัดสินใจ</em> (Renew/Cancel) แต่ IT Admin คือคนที่ <em>ลงมือ</em> ที่ Vendor Portal จริงๆ</div>
+    </div>
+  </div>
+
+  <div class="change-section">
+    <div class="change-title">⚡ <span class="flow-name">Flow 4 — License Movement</span> <span class="badge badge-new">ใหม่ — Priority 0</span></div>
+    <div class="callout callout-red" style="margin-bottom:10px">
+      <div class="callout-icon">🎯</div>
+      <div><strong>Priority 0:</strong> เมื่อพนักงาน Resign หรือ Transfer แผนก License ต้องไม่หลุดลอย — ต้องมีคนรับไป (Transfer) หรือคืน Pool หรือยกเลิก ก่อนที่ IT จะปิด Account พนักงาน</div>
+    </div>
+    <table class="ct">
+      <tr><th style="width:80px">Step</th><th>Action</th><th style="width:220px">หมายเหตุ</th></tr>
+      <tr><td>Trigger</td><td>PowerApps V2 trigger<br>(IT Admin กด "ดำเนินการ Movement" ใน Admin Screen)</td><td>รับ: LicenseID, MovementAction, TransferToEmail, Reason</td></tr>
+      <tr><td>1</td><td>Get item → Licenses (LicenseID ที่ส่งมา)</td><td>ดึงข้อมูล License ปัจจุบัน</td></tr>
+      <tr><td>2a</td><td><strong>If MovementAction = "Transfer":</strong><br>Update Licenses: AssignedTo=TransferToEmail, MovementStatus="Transferred", MovementReason=Reason, TransferredTo=TransferToEmail<br>→ Send Email ผู้รับ License ใหม่: "คุณได้รับ License [Name] โอนมาจาก [เดิม]"<br>→ Send Email Manager: "License ของ [พนักงานเดิม] โอนให้ [ใหม่] แล้ว"</td><td>License ยังใช้งานต่อ ไม่ขาดตอน</td></tr>
+      <tr><td>2b</td><td><strong>If MovementAction = "Return to Pool":</strong><br>Update Licenses: AssignedTo=blank, MovementStatus="Returned to Pool", MovementReason=Reason<br>→ Send Email IT Admin + Manager: "License [Name] คืน Pool แล้ว รอ Assign ใหม่"</td><td>License ยังอยู่ในระบบ ไม่ถูกยกเลิก</td></tr>
+      <tr><td>2c</td><td><strong>If MovementAction = "Cancel":</strong><br>Update Licenses: Status="Cancelled", MovementStatus="Cancelled", MovementReason=Reason, ExpiryAction="Cancel"<br>→ Create LicenseHistory log (Action="Cancelled - "+Reason)<br>→ Send Email IT Admin: "License [Name] ถูก Cancel — ดำเนินการ Cancel ที่ Vendor Portal ด้วย"</td><td>IT Admin ต้องไป Cancel ที่ Vendor Portal จริงๆ ด้วย</td></tr>
+      <tr><td>3</td><td>Create LicenseHistory log ทุก path (Action=MovementAction, ChangedBy=IT Admin, Note=Reason)</td><td>Audit trail ครบ</td></tr>
+    </table>
+    <div class="callout callout-amber" style="margin-top:10px">
+      <div class="callout-icon">⚠️</div>
+      <div><strong>ข้อควรระวัง:</strong> Flow นี้ต้อง run ก่อนที่ IT Admin จะปิด Account พนักงาน (Disable AD/Entra account) ถ้าปิด Account ก่อน License จะหลุดลอยทันที เพราะ AssignedTo อ้างถึง account ที่ disabled แล้ว</div>
+    </div>
+  </div>
+
+  <div class="callout callout-red">
+    <div class="callout-icon">🗑️</div>
+    <div><strong>ยกเลิก Flow 4 และ Flow 5 เดิม (v1)</strong> — รวมเข้าใน Flow 1 (routing) และ Flow 2 (write-back trigger) แล้ว Flow 4 ใหม่ = License Movement</div>
+  </div>
+</div>
+
+<!-- ═══ TAB: POWER APPS ═══ -->
+<div class="tab-content" id="tab-apps">
+  <div class="sec-title">📱 Power Apps — สิ่งที่ต้องแก้ไข</div>
+  <div class="sec-sub">3 หน้าจอเดิม เพิ่มแค่ส่วน Write-Back ในหน้า Admin ไม่ต้องสร้าง App แยกสำหรับแผนกจัดซื้อ/การเงิน</div>
+
+  <div class="change-section">
+    <div class="change-title">📝 Screen 1: Request Form <span class="badge badge-mod">เพิ่ม PaymentMethod</span></div>
+    <table class="ct">
+      <tr><th style="width:200px">Control</th><th style="width:100px">สถานะ</th><th>รายละเอียด</th></tr>
+      <tr><td>Software Dropdown</td><td><span class="badge badge-same">เดิม</span></td><td>Choices จาก SoftwareCatalog</td></tr>
+      <tr><td>Quantity + Justification</td><td><span class="badge badge-same">เดิม</span></td><td>—</td></tr>
+      <tr class="new-row"><td><strong>PaymentMethod Dropdown</strong></td><td><span class="badge badge-new">เพิ่มใหม่</span></td><td><code>Items: ["PR/PO","Corporate Card"]</code> Default = "PR/PO"</td></tr>
+      <tr class="new-row"><td><strong>Submit Button (Power Fx)</strong></td><td><span class="badge badge-mod">แก้ไข</span></td><td>เพิ่ม PaymentMethod ใน Patch():<br><code style="font-size:11px">Patch(ApprovalRequests, Defaults(ApprovalRequests), {Title: txtSoftware.Text, PaymentMethod: ddPayment.Selected.Value, PurchaseStatus: "Pending", ApprovalStatus: "Pending"}); LicenseFlow.Run(...)</code></td></tr>
+    </table>
+  </div>
+
+  <div class="change-section">
+    <div class="change-title">📊 Screen 2: Dashboard <span class="badge badge-mod">เพิ่ม counter</span></div>
+    <table class="ct">
+      <tr><th style="width:200px">Control</th><th style="width:100px">สถานะ</th><th>รายละเอียด</th></tr>
+      <tr><td>Active Licenses Gallery</td><td><span class="badge badge-same">เดิม</span></td><td>—</td></tr>
+      <tr><td>Expiry Warning</td><td><span class="badge badge-same">เดิม</span></td><td>—</td></tr>
+      <tr class="new-row"><td><strong>Pending Purchases Label</strong></td><td><span class="badge badge-new">เพิ่มใหม่</span></td><td>แสดงจำนวน Request ที่รอ write-back:<br><code style="font-size:11px">CountRows(Filter(ApprovalRequests, PurchaseStatus="In Process"))</code></td></tr>
+    </table>
+  </div>
+
+  <div class="change-section">
+    <div class="change-title">⚙️ Screen 3: Admin <span class="badge badge-mod">เพิ่ม Write-Back Section</span></div>
+    <div class="callout callout-amber" style="margin-bottom:10px">
+      <div class="callout-icon">🔑</div>
+      <div>เพิ่ม section "บันทึกผลการจัดซื้อ" ในหน้า Admin เดิม HR/IT Admin รับเลข PO หรือ CC ID จากแผนกแล้วกรอกที่นี่ ไม่ต้องสร้าง App แยก</div>
+    </div>
+    <table class="ct">
+      <tr><th style="width:200px">Control</th><th style="width:100px">สถานะ</th><th>รายละเอียด</th></tr>
+      <tr><td>License CRUD</td><td><span class="badge badge-same">เดิม</span></td><td>—</td></tr>
+      <tr class="new-row"><td><strong>Pending Purchases Gallery</strong></td><td><span class="badge badge-new">เพิ่มใหม่</span></td><td><code>Filter(ApprovalRequests, PurchaseStatus="In Process")</code></td></tr>
+      <tr class="new-row"><td><strong>PO Number Input</strong></td><td><span class="badge badge-new">เพิ่มใหม่</span></td><td>Visible เมื่อ <code>SelectedReq.PaymentMethod = "PR/PO"</code></td></tr>
+      <tr class="new-row"><td><strong>CC Ref ID Input</strong></td><td><span class="badge badge-new">เพิ่มใหม่</span></td><td>Visible เมื่อ <code>SelectedReq.PaymentMethod = "Corporate Card"</code></td></tr>
+      <tr class="new-row"><td><strong>ปุ่ม "จัดซื้อเสร็จแล้ว"</strong></td><td><span class="badge badge-new">เพิ่มใหม่</span></td><td>Power Fx:<br><code style="font-size:11px">Patch(ApprovalRequests, SelectedReq, {PONumber: txtPO.Text, CCRefID: txtCC.Text, PurchaseStatus: "Completed", PurchaseCompletedDate: Today()})</code><br>→ Flow 2 trigger อัตโนมัติ</td></tr>
+    </table>
+  </div>
+
+  <div class="change-section">
+    <div class="change-title">⚙️ Screen 3: Admin — <strong>Expiry Decision Panel</strong> <span class="badge badge-new">เพิ่มใหม่ — Priority 0</span></div>
+    <div class="callout callout-red" style="margin-bottom:10px">
+      <div class="callout-icon">🎯</div>
+      <div>เมื่อ Flow 3 set <code>ExpiryActionStatus = "Pending Decision"</code> → License จะขึ้นใน Panel นี้ให้ Manager/IT Admin มาเลือก Action ใน Power Apps ก่อนที่ IT Admin จะไป Vendor Portal</div>
+    </div>
+    <table class="ct">
+      <tr><th style="width:220px">Control</th><th style="width:100px">สถานะ</th><th>รายละเอียด</th></tr>
+      <tr class="new-row"><td><strong>Expiry Pending Gallery</strong></td><td><span class="badge badge-new">เพิ่มใหม่</span></td><td><code style="font-size:11px">Filter(Licenses, ExpiryActionStatus = "Pending Decision" || ExpiryActionStatus = "Action Required")</code><br>แสดง: SoftwareName, AssignedTo, ExpiryDate, DaysLeft</td></tr>
+      <tr class="new-row"><td><strong>ExpiryAction Dropdown</strong></td><td><span class="badge badge-new">เพิ่มใหม่</span></td><td>Items: <code>["Renew","Cancel","Transfer"]</code><br>— Manager หรือ IT Admin เลือก</td></tr>
+      <tr class="new-row"><td><strong>TransferTo Person Picker</strong></td><td><span class="badge badge-new">เพิ่มใหม่</span></td><td>Visible เมื่อ <code>ddExpiryAction.Selected.Value = "Transfer"</code></td></tr>
+      <tr class="new-row"><td><strong>ปุ่ม "ยืนยันการตัดสินใจ"</strong></td><td><span class="badge badge-new">เพิ่มใหม่</span></td><td><code style="font-size:11px">Patch(Licenses, SelectedLic, {ExpiryAction: ddExpiryAction.Selected.Value, ExpiryActionBy: User().Email, ExpiryActionStatus: "Action Required"}); LicenseMovementFlow.Run(...)</code><br>→ Flow 3 ส่ง Task ให้ IT Admin ดำเนินการที่ Vendor Portal</td></tr>
+      <tr class="new-row"><td><strong>ปุ่ม "ดำเนินการเสร็จแล้ว (Vendor)"</strong></td><td><span class="badge badge-new">เพิ่มใหม่</span></td><td><code style="font-size:11px">Patch(Licenses, SelectedLic, {ExpiryActionStatus: "Done"})</code><br>IT Admin กดหลังจาก Cancel/Renew ที่ Vendor Portal จริงๆ แล้ว</td></tr>
+    </table>
+  </div>
+
+  <div class="change-section">
+    <div class="change-title">⚙️ Screen 3: Admin — <strong>License Movement Panel</strong> <span class="badge badge-new">เพิ่มใหม่ — Priority 0</span></div>
+    <div class="callout callout-amber" style="margin-bottom:10px">
+      <div class="callout-icon">⚠️</div>
+      <div>ใช้เมื่อมีการแจ้ง Resign/Transfer จาก HR — IT Admin ต้องดำเนินการในหน้านี้ <strong>ก่อนปิด Account</strong> พนักงาน</div>
+    </div>
+    <table class="ct">
+      <tr><th style="width:220px">Control</th><th style="width:100px">สถานะ</th><th>รายละเอียด</th></tr>
+      <tr class="new-row"><td><strong>Employee Licenses Gallery</strong></td><td><span class="badge badge-new">เพิ่มใหม่</span></td><td>Filter by person: <code style="font-size:11px">Filter(Licenses, AssignedTo.Email = txtSearchEmployee.Text && Status = "Active")</code><br>แสดง License ทั้งหมดของพนักงานคนนั้น</td></tr>
+      <tr class="new-row"><td><strong>MovementAction Dropdown</strong></td><td><span class="badge badge-new">เพิ่มใหม่</span></td><td>Items: <code>["Transfer","Return to Pool","Cancel"]</code></td></tr>
+      <tr class="new-row"><td><strong>TransferTo Person Picker</strong></td><td><span class="badge badge-new">เพิ่มใหม่</span></td><td>Visible เมื่อ <code>ddMovement.Selected.Value = "Transfer"</code></td></tr>
+      <tr class="new-row"><td><strong>MovementReason Dropdown</strong></td><td><span class="badge badge-new">เพิ่มใหม่</span></td><td>Items: <code>["Resign","Transfer","Other"]</code></td></tr>
+      <tr class="new-row"><td><strong>ปุ่ม "ดำเนินการ Movement"</strong></td><td><span class="badge badge-new">เพิ่มใหม่</span></td><td><code style="font-size:11px">LicenseMovementFlow.Run(SelectedLic.ID, ddMovement.Selected.Value, ppTransferTo.Selected.Email, ddReason.Selected.Value)</code><br>→ Flow 4 trigger อัตโนมัติ</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ═══ TAB: LIFECYCLE ═══ -->
+<div class="tab-content" id="tab-lifecycle">
+  <div class="sec-title">🔁 License Lifecycle — Priority 0</div>
+  <div class="sec-sub">สองกรณีที่เป็น Core Requirement: (1) พนักงานออก/โอนย้าย License ต้องไม่หลุดลอย (2) License หมดอายุ ต้องมีคนรับผิดชอบ Cancel/Renew จริงๆ ไม่ใช่แค่รับรู้</div>
+
+  <div class="callout callout-red">
+    <div class="callout-icon">🎯</div>
+    <div><strong>ทำไมถึงเป็น Priority 0:</strong> นี่คือ Requirement หลักที่ได้รับมอบหมาย ถ้า License หลุดลอย = เสียเงินฟรีทุกเดือน ถ้า Expired แล้วไม่มีใค Action = อาจถูก Auto-renew หรือ License หายโดยไม่มีใครรู้</div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px">
+    <!-- LEFT: Movement -->
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px">
+      <div style="font-size:14px;font-weight:700;margin-bottom:4px;color:var(--amber-dk)">🔀 กรณีที่ 1: License Movement</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:14px">เกิดเมื่อพนักงาน Resign หรือ Transfer แผนก</div>
+
+      <div style="font-size:12px;font-weight:700;margin-bottom:8px;color:var(--muted)">TRIGGER</div>
+      <div style="background:#FFF7ED;border:1px solid #FDE68A;border-radius:8px;padding:10px 12px;font-size:12px;margin-bottom:14px">
+        HR แจ้ง IT Admin (ผ่าน Email/Teams) → IT Admin เปิด Power Apps Admin Screen → เลือกพนักงาน → เห็น License ทั้งหมด → เลือก Action
+      </div>
+
+      <div style="font-size:12px;font-weight:700;margin-bottom:8px;color:var(--muted)">3 ACTIONS ที่เลือกได้</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="border-left:3px solid var(--green);padding:8px 12px;background:var(--green-bg);border-radius:0 6px 6px 0;font-size:12px">
+          <strong style="color:var(--green-dk)">Transfer →</strong> License โอนให้พนักงานคนอื่น<br>
+          <span style="color:var(--muted)">ผล: AssignedTo เปลี่ยน, ใช้งานต่อได้ทันที</span>
+        </div>
+        <div style="border-left:3px solid var(--blue);padding:8px 12px;background:var(--blue-bg);border-radius:0 6px 6px 0;font-size:12px">
+          <strong style="color:var(--blue-dk)">Return to Pool →</strong> License คืนระบบ ยังไม่ Assign ใคร<br>
+          <span style="color:var(--muted)">ผล: AssignedTo ว่าง รอ Assign ครั้งต่อไป</span>
+        </div>
+        <div style="border-left:3px solid var(--red);padding:8px 12px;background:var(--red-bg);border-radius:0 6px 6px 0;font-size:12px">
+          <strong style="color:var(--red-dk)">Cancel →</strong> ยกเลิก License ไม่ต้องการแล้ว<br>
+          <span style="color:var(--muted)">ผล: Status="Cancelled" + IT Admin ต้องไป Cancel ที่ Vendor Portal ด้วย</span>
+        </div>
+      </div>
+
+      <div class="callout callout-amber" style="margin-top:14px">
+        <div class="callout-icon">⚠️</div>
+        <div style="font-size:11px"><strong>ต้องทำก่อนปิด AD Account!</strong> ถ้าปิด Account ก่อน license จะหลุดลอย หาเจ้าของไม่ได้</div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Expiry Action -->
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px">
+      <div style="font-size:14px;font-weight:700;margin-bottom:4px;color:var(--red-dk)">⏰ กรณีที่ 2: Expiry Action</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:14px">ไม่ใช่แค่แจ้งเตือน — ต้องมีคนรับผิดชอบจนกว่าจะ "Done"</div>
+
+      <div style="font-size:12px;font-weight:700;margin-bottom:8px;color:var(--muted)">TIMELINE</div>
+      <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px">
+        <div style="display:flex;align-items:flex-start;gap:10px;font-size:12px">
+          <div style="background:var(--amber);color:#fff;border-radius:12px;padding:2px 8px;font-size:10px;font-weight:700;white-space:nowrap;margin-top:1px">30 วัน</div>
+          <div>Flow 3 set <code>ExpiryActionStatus="Pending Decision"</code><br>ส่ง Email Owner + Manager + IT Admin พร้อม Link Power Apps</div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:10px;font-size:12px">
+          <div style="background:#F97316;color:#fff;border-radius:12px;padding:2px 8px;font-size:10px;font-weight:700;white-space:nowrap;margin-top:1px">7 วัน</div>
+          <div>ถ้ายังไม่มีใค Action → Escalate ส่งซ้ำ IT Admin + Manager</div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:10px;font-size:12px">
+          <div style="background:var(--red);color:#fff;border-radius:12px;padding:2px 8px;font-size:10px;font-weight:700;white-space:nowrap;margin-top:1px">1 วัน</div>
+          <div>set <code>ExpiryActionStatus="Action Required"</code><br>ส่ง Email IT Admin: "ดำเนินการที่ Vendor Portal ทันที"</div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:10px;font-size:12px">
+          <div style="background:#991B1B;color:#fff;border-radius:12px;padding:2px 8px;font-size:10px;font-weight:700;white-space:nowrap;margin-top:1px">หมดแล้ว</div>
+          <div>Status="Expired" + ส่ง Email IT Admin ให้ยืนยันว่า Cancel/Renew ที่ Vendor แล้ว</div>
+        </div>
+      </div>
+
+      <div style="font-size:12px;font-weight:700;margin-bottom:8px;color:var(--muted)">ใครมีอำนาจ Cancel ที่ Vendor Portal?</div>
+      <div style="display:flex;flex-direction:column;gap:6px;font-size:12px">
+        <div style="background:var(--green-bg);border-radius:8px;padding:8px 12px"><strong style="color:var(--green-dk)">IT Admin</strong> — ลงมือจริง ที่ Vendor Portal / Billing Email บริษัท ✅</div>
+        <div style="background:var(--blue-bg);border-radius:8px;padding:8px 12px"><strong style="color:var(--blue-dk)">Manager</strong> — ตัดสินใจ Renew/Cancel ใน Power Apps ✅</div>
+        <div style="background:var(--red-bg);border-radius:8px;padding:8px 12px"><strong style="color:var(--red-dk)">License Owner (พนักงาน)</strong> — รับทราบเท่านั้น ❌ ไม่มี access Vendor Portal</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px">
+    <div style="font-size:14px;font-weight:700;margin-bottom:12px">📊 SharePoint Status ทั้งหมดที่ต้องติดตาม</div>
+    <table class="ct">
+      <tr><th>Field</th><th>Values</th><th>ใช้เมื่อไหร่</th></tr>
+      <tr><td><span class="col-name">MovementStatus</span></td><td>Active / Transferred / Returned to Pool / Cancelled</td><td>ทุกครั้งที่มี Resign/Transfer</td></tr>
+      <tr><td><span class="col-name">ExpiryActionStatus</span></td><td>Not Required → Pending Decision → Action Required → Done</td><td>Flow 3 set อัตโนมัติ ทุกวัน</td></tr>
+      <tr><td><span class="col-name">ExpiryAction</span></td><td>Not Set / Renew / Cancel / Transfer</td><td>Manager/IT Admin เลือกใน Power Apps</td></tr>
+      <tr><td><span class="col-name">ExpiryActionBy</span></td><td>Person</td><td>IT Admin ที่รับผิดชอบ Vendor Portal</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ═══ TAB: JUNK ═══ -->
+<div class="tab-content" id="tab-junk">
+  <div class="sec-title">🧹 Junk ที่ตัดออก — และทำไม</div>
+  <div class="sec-sub">สิ่งเหล่านี้ทำให้ซับซ้อนเกินจำเป็นและทำให้ไม่เสร็จทัน 31 มีนาคม</div>
+
+  <div class="callout callout-red">
+    <div class="callout-icon">🗑️</div>
+    <div><strong>ตัด: สร้าง Power Apps แยกสำหรับ Procurement และ Finance</strong><br>ทั้งสองแผนกแค่ต้องกรอก reference number 1 field ไม่คุ้มสร้าง App แยก เพิ่ม section เล็กๆ ในหน้า Admin เดิมก็พอ ประหยัดเวลาได้ 1–2 วัน</div>
+  </div>
+  <div class="callout callout-red">
+    <div class="callout-icon">🗑️</div>
+    <div><strong>ตัด: Flow 4 "Request Notification" และ Flow 5 "Route Notification" แยกต่างหาก</strong><br>Notification เหล่านี้ควรอยู่ใน Flow 1 เป็น branch ต่อท้าย การแยก Flow ทำให้ debug ยากและเพิ่ม complexity โดยไม่จำเป็น</div>
+  </div>
+  <div class="callout callout-red">
+    <div class="callout-icon">🗑️</div>
+    <div><strong>ตัด: Power BI Dashboard ใน MVP</strong><br>สิ่งสำคัญกว่าคือ system ทำงานได้ก่อน Power BI ทำได้ภายหลังเมื่อ data พร้อม ทำตอนนี้คือ scope creep</div>
+  </div>
+  <div class="callout callout-red">
+    <div class="callout-icon">🗑️</div>
+    <div><strong>ตัด: Multi-level approval (Reviewer → Approver → หัวหน้า)</strong><br>สำหรับ MVP ให้ Manager คนเดียว approve ก่อน ถ้าองค์กรต้องการ multi-level ค่อยเพิ่มทีหลัง การทำตั้งแต่แรกทำให้ Flow ซับซ้อนและ test ยาก</div>
+  </div>
+  <div class="callout callout-amber">
+    <div class="callout-icon">⏸️</div>
+    <div><strong>เลื่อน: HTML Email Template สวยงาม</strong><br>ทำงานได้ด้วย plain text ก่อน ปรับรูปแบบ Email ในรอบถัดไป ไม่ใช่ blocker</div>
+  </div>
+  <div class="callout callout-green">
+    <div class="callout-icon">🎯</div>
+    <div><strong>MVP ที่ชัดเจน:</strong> System ทำงานครบ loop — Request → Approval → Write-Back → License Assigned → Expiry Alert ภายใน 31 มีนาคม ทุกอย่างอื่นคือ nice-to-have</div>
+  </div>
+</div>
+
+<script>
+function switchTab(id, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  el.classList.add('active');
+}
+</script>
+</body>
+</html>
