@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TA Flow Analysis — HRIS Modular Revamp</title>
+<style>
+  :root {
+    --navy: #1F3864; --blue: #2E75B6; --teal: #17a589; --gold: #d4ac0d;
+    --red: #c0392b; --orange: #e67e22; --green: #27ae60; --purple: #8e44ad;
+    --gray: #7f8c8d; --light: #ecf0f1; --white: #fff;
+    --card-shadow: 0 2px 12px rgba(0,0,0,0.10);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f4f8; color: #2c3e50; }
+
+  /* ── NAV ── */
+  .topbar { background: var(--navy); color: #fff; padding: 14px 28px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+  .topbar h1 { font-size: 17px; font-weight: 700; letter-spacing: .5px; }
+  .topbar span { font-size: 12px; opacity: .7; }
+  .tabs { display: flex; gap: 6px; background: var(--navy); padding: 0 28px 0; border-bottom: 2px solid rgba(255,255,255,0.15); }
+  .tab { padding: 10px 18px; cursor: pointer; color: rgba(255,255,255,0.65); font-size: 13px; font-weight: 600; border-bottom: 3px solid transparent; transition: all .2s; user-select: none; }
+  .tab:hover { color: #fff; }
+  .tab.active { color: #fff; border-bottom-color: var(--gold); }
+
+  /* ── PAGES ── */
+  .page { display: none; padding: 28px; max-width: 1400px; margin: 0 auto; }
+  .page.active { display: block; }
+
+  /* ── CARDS ── */
+  .card { background: var(--white); border-radius: 10px; padding: 22px 26px; box-shadow: var(--card-shadow); margin-bottom: 20px; }
+  .card h2 { font-size: 15px; font-weight: 700; color: var(--navy); margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+  .card h3 { font-size: 13px; font-weight: 700; color: var(--blue); margin-bottom: 10px; margin-top: 14px; }
+
+  /* ── STAT GRID ── */
+  .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; margin-bottom: 20px; }
+  .stat { background: var(--white); border-radius: 10px; padding: 18px; box-shadow: var(--card-shadow); text-align: center; border-top: 4px solid var(--blue); }
+  .stat.red { border-top-color: var(--red); }
+  .stat.gold { border-top-color: var(--gold); }
+  .stat.green { border-top-color: var(--green); }
+  .stat.purple { border-top-color: var(--purple); }
+  .stat-num { font-size: 34px; font-weight: 800; color: var(--navy); line-height: 1; }
+  .stat-label { font-size: 11px; color: var(--gray); margin-top: 5px; }
+
+  /* ── PIPELINE ── */
+  .pipeline-wrap { overflow-x: auto; padding-bottom: 10px; }
+  .pipeline { display: flex; gap: 0; align-items: stretch; min-width: 900px; }
+  .pipeline-stage { flex: 1; display: flex; flex-direction: column; }
+  .stage-header { padding: 10px 12px; text-align: center; font-weight: 700; font-size: 12px; color: #fff; border-radius: 8px 8px 0 0; }
+  .stage-flows { border: 2px solid; border-top: none; border-radius: 0 0 8px 8px; padding: 10px 8px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+  .flow-chip { border-radius: 5px; padding: 6px 9px; font-size: 11px; font-weight: 500; cursor: pointer; transition: opacity .15s; position: relative; }
+  .flow-chip:hover { opacity: .8; }
+  .flow-chip .badge { position: absolute; top: -4px; right: -4px; background: var(--red); color: #fff; border-radius: 10px; font-size: 9px; padding: 1px 5px; font-weight: 700; }
+  .arrow { display: flex; align-items: center; padding: 0 4px; color: var(--gray); font-size: 22px; opacity: .4; align-self: center; flex-shrink: 0; }
+
+  /* ── REDUNDANCY TABLE ── */
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  th { background: var(--navy); color: #fff; padding: 9px 12px; text-align: left; font-weight: 600; }
+  td { padding: 8px 12px; border-bottom: 1px solid #e8edf2; vertical-align: top; }
+  tr:nth-child(even) td { background: #f7fafd; }
+  tr:hover td { background: #eaf2fb; }
+  .tag { display: inline-block; border-radius: 4px; padding: 2px 8px; font-size: 11px; font-weight: 700; margin: 1px; }
+  .tag.red { background: #fde8e8; color: var(--red); }
+  .tag.orange { background: #fdf0e0; color: var(--orange); }
+  .tag.green { background: #e0f7ea; color: var(--green); }
+  .tag.blue { background: #e0edfb; color: var(--blue); }
+  .tag.purple { background: #f0e0fb; color: var(--purple); }
+  .tag.gray { background: #efefef; color: var(--gray); }
+
+  /* ── MODULE MAP ── */
+  .module-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+  .module-card { border-radius: 8px; padding: 14px 16px; border-left: 5px solid; }
+  .module-card.core { border-color: var(--blue); background: #eaf2fb; }
+  .module-card.notify { border-color: var(--teal); background: #e8f8f5; }
+  .module-card.approval { border-color: var(--gold); background: #fdf9e3; }
+  .module-card.log { border-color: var(--purple); background: #f5eefb; }
+  .module-card.doc { border-color: var(--orange); background: #fdf0e0; }
+  .module-card h4 { font-size: 12.5px; font-weight: 700; margin-bottom: 6px; }
+  .module-card p { font-size: 11px; color: #555; line-height: 1.5; }
+  .module-card .used-by { margin-top: 8px; font-size: 10px; color: var(--gray); }
+
+  /* ── TIMELINE / GANTT ── */
+  .gantt-wrap { overflow-x: auto; }
+  .gantt { width: 100%; min-width: 800px; }
+  .gantt-header { display: grid; grid-template-columns: 200px repeat(12, 1fr); background: var(--navy); color: #fff; font-size: 11px; font-weight: 700; }
+  .gantt-header div { padding: 8px 6px; border-right: 1px solid rgba(255,255,255,0.15); text-align: center; }
+  .gantt-row { display: grid; grid-template-columns: 200px repeat(12, 1fr); border-bottom: 1px solid #e0e8f0; min-height: 38px; align-items: center; }
+  .gantt-row:nth-child(even) { background: #f7fafd; }
+  .gantt-row:hover { background: #eaf2fb; }
+  .gantt-label { font-size: 11.5px; font-weight: 600; padding: 6px 10px; color: var(--navy); border-right: 2px solid #d0dce8; }
+  .gantt-label small { display: block; font-weight: 400; color: var(--gray); font-size: 10px; }
+  .gantt-cell { position: relative; height: 38px; border-right: 1px solid #e8edf2; }
+  .gantt-bar { position: absolute; top: 8px; height: 22px; border-radius: 4px; display: flex; align-items: center; padding: 0 6px; font-size: 10px; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; }
+  .phase-title { grid-column: 1 / -1; background: var(--blue); color: #fff; font-size: 11.5px; font-weight: 700; padding: 5px 10px; letter-spacing: .5px; }
+
+  /* ── LIST ── */
+  .list-item { display: flex; gap: 10px; align-items: flex-start; padding: 6px 0; border-bottom: 1px solid #f0f4f8; font-size: 12.5px; }
+  .list-item:last-child { border-bottom: none; }
+  .bullet { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
+
+  /* ── LOG MAPPING TABLE ── */
+  .log-map { font-size: 12px; }
+  .log-map th { background: var(--purple); }
+
+  /* ── TOOLTIP ── */
+  [data-tip] { cursor: help; border-bottom: 1px dashed var(--blue); }
+
+  /* ── FOOTER ── */
+  .footer { text-align: center; font-size: 11px; color: var(--gray); padding: 20px; margin-top: 10px; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>🏗️ TA Flow Analysis — HRIS Modular Revamp Dashboard</h1>
+  <span>Buzzebees HRIS | วิเคราะห์ 55 flows | 2026-04-24</span>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="showPage('overview')">📊 Overview</div>
+  <div class="tab" onclick="showPage('pipeline')">🔄 Pipeline Map</div>
+  <div class="tab" onclick="showPage('redundancy')">⚠️ Redundancy Analysis</div>
+  <div class="tab" onclick="showPage('modules')">🧩 Modular Architecture</div>
+  <div class="tab" onclick="showPage('logs')">📋 Log &amp; Tracking Map</div>
+  <div class="tab" onclick="showPage('timeline')">📅 Migration Timeline</div>
+</div>
+
+<!-- ═══════════════════ PAGE 1: OVERVIEW ═══════════════════ -->
+<div class="page active" id="page-overview">
+  <div class="stat-grid">
+    <div class="stat"><div class="stat-num">55</div><div class="stat-label">Total Flows</div></div>
+    <div class="stat red"><div class="stat-num">12</div><div class="stat-label">Duplicate / ซ้ำซ้อน</div></div>
+    <div class="stat gold"><div class="stat-num">~25%</div><div class="stat-label">Redundant Logic</div></div>
+    <div class="stat green"><div class="stat-num">8</div><div class="stat-label">Reusable Modules (เสนอ)</div></div>
+    <div class="stat purple"><div class="stat-num">7</div><div class="stat-label">Core SP Lists Shared</div></div>
+    <div class="stat"><div class="stat-num">416</div><div class="stat-label">Total Actions</div></div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;">
+    <div class="card">
+      <h2>📂 Flow Distribution by Domain</h2>
+      <table>
+        <tr><th>Domain</th><th>จำนวน Flow</th><th>% ของระบบ</th><th>Redundancy</th></tr>
+        <tr><td>🟠 Hiring Pipeline</td><td>20</td><td>36%</td><td><span class="tag red">HIGH</span></td></tr>
+        <tr><td>🟢 Onboarding &amp; Probation</td><td>13</td><td>23%</td><td><span class="tag orange">MED</span></td></tr>
+        <tr><td>🔵 Org Chart &amp; Transfer</td><td>7</td><td>13%</td><td><span class="tag red">CRITICAL</span></td></tr>
+        <tr><td>🟣 Contract &amp; Employment</td><td>6</td><td>11%</td><td><span class="tag orange">MED</span></td></tr>
+        <tr><td>⚫ Utilities &amp; Support</td><td>5</td><td>9%</td><td><span class="tag green">LOW</span></td></tr>
+        <tr><td>🔴 Resign &amp; Exit</td><td>2</td><td>4%</td><td><span class="tag green">LOW</span></td></tr>
+        <tr><td>💛 Referral Programs</td><td>2</td><td>4%</td><td><span class="tag green">LOW</span></td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <h2>⚡ Trigger Type Distribution</h2>
+      <table>
+        <tr><th>Trigger</th><th>จำนวน</th><th>Risk</th></tr>
+        <tr><td>HTTP / Request (instant)</td><td>25 flows (45%)</td><td><span class="tag orange">ค้นหายากถ้าไม่มี doc</span></td></tr>
+        <tr><td>Microsoft Forms / Webhook</td><td>20 flows (36%)</td><td><span class="tag orange">Form ถูกลบ = flow พัง</span></td></tr>
+        <tr><td>OpenAPI Connection</td><td>8 flows (14%)</td><td><span class="tag blue">Latency / timeout</span></td></tr>
+        <tr><td>Scheduled (Recurrence)</td><td>2 flows (3%)</td><td><span class="tag orange">ถ้า disable = missed run</span></td></tr>
+      </table>
+      <h3>🔗 Core SharePoint Lists (Shared Dependency)</h3>
+      <table>
+        <tr><th>List</th><th>ใช้โดย</th><th>หน้าที่</th></tr>
+        <tr><td><code>1aa3f702...</code></td><td><b>37 flows</b></td><td>Error Log / Ticket</td></tr>
+        <tr><td><code>39fad612...</code></td><td>13 flows</td><td>Employee / New Joiner</td></tr>
+        <tr><td><code>54e0f0d1...</code></td><td>10 flows</td><td>Org Chart Settings</td></tr>
+        <tr><td><code>5103e29f...</code></td><td>8 flows</td><td>Probation / Performance</td></tr>
+        <tr><td><code>602f7412...</code></td><td>7 flows</td><td>Hiring / Requisition</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🏆 Key Findings Summary</h2>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;">
+      <div style="background:#fde8e8;border-radius:8px;padding:14px;">
+        <b style="color:var(--red)">🔴 Critical Issues</b>
+        <div class="list-item"><span class="bullet" style="background:var(--red)"></span>Org Chart มี 5 flows ทำงานซ้ำกัน — consolidate ทันที</div>
+        <div class="list-item"><span class="bullet" style="background:var(--red)"></span>HiringApproveRequestForm มี 3 versions (V1, V2, V2NEW)</div>
+        <div class="list-item"><span class="bullet" style="background:var(--red)"></span>Probation Evaluation มี 3 variants + Godclass</div>
+      </div>
+      <div style="background:#fdf0e0;border-radius:8px;padding:14px;">
+        <b style="color:var(--orange)">🟠 Medium Issues</b>
+        <div class="list-item"><span class="bullet" style="background:var(--orange)"></span>ProposeCV มี 4 variants — ควรเหลือ 2</div>
+        <div class="list-item"><span class="bullet" style="background:var(--orange)"></span>Satisfaction Survey กระจาย 3 flows</div>
+        <div class="list-item"><span class="bullet" style="background:var(--orange)"></span>Approval chain logic copy-paste 11 flows</div>
+      </div>
+      <div style="background:#e0f7ea;border-radius:8px;padding:14px;">
+        <b style="color:var(--green)">🟢 Strengths</b>
+        <div class="list-item"><span class="bullet" style="background:var(--green)"></span>Error handling standardized 67% ของ flows</div>
+        <div class="list-item"><span class="bullet" style="background:var(--green)"></span>Domain separation ชัดเจน</div>
+        <div class="list-item"><span class="bullet" style="background:var(--green)"></span>Ticket log list มีแล้ว — ต่อยอดได้เลย</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ PAGE 2: PIPELINE ═══════════════════ -->
+<div class="page" id="page-pipeline">
+  <div class="card">
+    <h2>🔄 TA Recruiting Pipeline — Flow Map</h2>
+    <p style="font-size:12px;color:var(--gray);margin-bottom:16px;">แต่ละ stage แสดง flows ที่ดำเนินงานอยู่ — <span style="color:var(--red);font-weight:700">🔴 = ซ้ำซ้อน / ควร consolidate</span></p>
+    <div class="pipeline-wrap">
+      <div class="pipeline">
+
+        <!-- MANPOWER -->
+        <div class="pipeline-stage">
+          <div class="stage-header" style="background:#8e44ad;">1. Manpower<br>Requisition</div>
+          <div class="stage-flows" style="border-color:#8e44ad;">
+            <div class="flow-chip" style="background:#f5eefb;color:#8e44ad;">TAManpowerRequisitionForm</div>
+            <div class="flow-chip" style="background:#f5eefb;color:#8e44ad;">TAManpowerRequisitionForm-Edit</div>
+            <div class="flow-chip" style="background:#f5eefb;color:#8e44ad;">TAManpowerRequisitionForm-sendemail</div>
+            <div class="flow-chip" style="background:#f5eefb;color:#8e44ad;">TAManpowerRequisitionForm-Resubmit</div>
+            <div class="flow-chip" style="background:#f5eefb;color:#8e44ad;">TAManpowerRequisition-Manual</div>
+            <div class="flow-chip" style="background:#f5eefb;color:#8e44ad;">TARepairmanpower</div>
+          </div>
+        </div>
+        <div class="arrow">›</div>
+
+        <!-- HIRING APPROVE -->
+        <div class="pipeline-stage">
+          <div class="stage-header" style="background:#c0392b;">2. Hiring Approve<br>Request</div>
+          <div class="stage-flows" style="border-color:#c0392b;">
+            <div class="flow-chip" style="background:#fde8e8;color:#c0392b;">TAHiringApproveRequestFormV2NEW<span class="badge">✓</span></div>
+            <div class="flow-chip" style="background:#fde8e8;color:#c0392b;opacity:.6;">TAHiringApproveRequestFormV2 <span class="badge">DEL</span></div>
+            <div class="flow-chip" style="background:#fde8e8;color:#c0392b;opacity:.6;">TAHiringApproveRequestForm <span class="badge">DEL</span></div>
+            <div class="flow-chip" style="background:#fde8e8;color:#c0392b;">TA--Merged--ManualHiringApprove</div>
+            <div class="flow-chip" style="background:#fde8e8;color:#c0392b;">TAHiringApproveRequest-SiteInterview</div>
+          </div>
+        </div>
+        <div class="arrow">›</div>
+
+        <!-- APPLICATION -->
+        <div class="pipeline-stage">
+          <div class="stage-header" style="background:#e67e22;">3. Application<br>Form</div>
+          <div class="stage-flows" style="border-color:#e67e22;">
+            <div class="flow-chip" style="background:#fdf0e0;color:#e67e22;">TAApplicationForm</div>
+            <div class="flow-chip" style="background:#fdf0e0;color:#e67e22;">TACandidateTest-Part1</div>
+            <div class="flow-chip" style="background:#fdf0e0;color:#e67e22;">TACandidateTest-Part2</div>
+            <div class="flow-chip" style="background:#fdf0e0;color:#e67e22;">TAReferralPrograms</div>
+          </div>
+        </div>
+        <div class="arrow">›</div>
+
+        <!-- PROPOSE CV -->
+        <div class="pipeline-stage">
+          <div class="stage-header" style="background:#d4ac0d;">4. Propose CV<br>&amp; Interview</div>
+          <div class="stage-flows" style="border-color:#d4ac0d;">
+            <div class="flow-chip" style="background:#fdf9e3;color:#b7950b;">TAProposeCV<span class="badge">✓</span></div>
+            <div class="flow-chip" style="background:#fdf9e3;color:#b7950b;opacity:.6;">TAProposeCV-Instantformerged <span class="badge">DEL?</span></div>
+            <div class="flow-chip" style="background:#fdf9e3;color:#b7950b;">TAProposeCVcreateInterview</div>
+            <div class="flow-chip" style="background:#fdf9e3;color:#b7950b;">TAProposeCVsenttointerview</div>
+          </div>
+        </div>
+        <div class="arrow">›</div>
+
+        <!-- INTERVIEW -->
+        <div class="pipeline-stage">
+          <div class="stage-header" style="background:#2E75B6;">5. Interview<br>Evaluation</div>
+          <div class="stage-flows" style="border-color:#2E75B6;">
+            <div class="flow-chip" style="background:#eaf2fb;color:#2E75B6;">TAInterviewEvaluation</div>
+            <div class="flow-chip" style="background:#eaf2fb;color:#2E75B6;">TAInterviewEvaluation-Interviewer<br>adjustfile</div>
+            <div class="flow-chip" style="background:#eaf2fb;color:#2E75B6;">TASendattachmenttomanager</div>
+          </div>
+        </div>
+        <div class="arrow">›</div>
+
+        <!-- OFFER -->
+        <div class="pipeline-stage">
+          <div class="stage-header" style="background:#17a589;">6. Offer Letter</div>
+          <div class="stage-flows" style="border-color:#17a589;">
+            <div class="flow-chip" style="background:#e8f8f5;color:#17a589;">TAOfferLetterPart-1</div>
+            <div class="flow-chip" style="background:#e8f8f5;color:#17a589;">TAOfferLetterPart-2</div>
+            <div class="flow-chip" style="background:#e8f8f5;color:#17a589;">TAAutogenerate<br>ContractDocDOCX</div>
+            <div class="flow-chip" style="background:#e8f8f5;color:#17a589;">TAReferral-Reimbursement</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Onboarding Pipeline -->
+    <h3 style="margin-top:22px;">🌱 Onboarding → Probation → Conversion Pipeline</h3>
+    <div class="pipeline-wrap" style="margin-top:10px;">
+      <div class="pipeline">
+        <div class="pipeline-stage">
+          <div class="stage-header" style="background:#27ae60;">New Joiner</div>
+          <div class="stage-flows" style="border-color:#27ae60;">
+            <div class="flow-chip" style="background:#e0f7ea;color:#1e8449;">TANewJoinertoEmployeeDetails</div>
+            <div class="flow-chip" style="background:#e0f7ea;color:#1e8449;">TARunnewjoinerflow</div>
+            <div class="flow-chip" style="background:#e0f7ea;color:#1e8449;">TAEditbuddyemail</div>
+            <div class="flow-chip" style="background:#e0f7ea;color:#1e8449;">TARunnewjoinersurvey(1week)</div>
+          </div>
+        </div>
+        <div class="arrow">›</div>
+        <div class="pipeline-stage">
+          <div class="stage-header" style="background:#2E75B6;">Probation Eval</div>
+          <div class="stage-flows" style="border-color:#2E75B6;">
+            <div class="flow-chip" style="background:#eaf2fb;color:#2E75B6;">TAProbationEvaluationPart-1<span class="badge">✓</span></div>
+            <div class="flow-chip" style="background:#fde8e8;color:#c0392b;opacity:.6;">TAProbationEval-1[URGENT] <span class="badge">DEL</span></div>
+            <div class="flow-chip" style="background:#eaf2fb;color:#2E75B6;">TAProbationEvaluationPart-2</div>
+            <div class="flow-chip" style="background:#fde8e8;color:#c0392b;opacity:.6;">TAProbationGodclass <span class="badge">Refactor</span></div>
+            <div class="flow-chip" style="background:#eaf2fb;color:#2E75B6;">TAProbationEvalFormForHR</div>
+            <div class="flow-chip" style="background:#eaf2fb;color:#2E75B6;">TAProbationEvalPart-3Resubmit</div>
+          </div>
+        </div>
+        <div class="arrow">›</div>
+        <div class="pipeline-stage">
+          <div class="stage-header" style="background:#d4ac0d;">Survey</div>
+          <div class="stage-flows" style="border-color:#d4ac0d;">
+            <div class="flow-chip" style="background:#fdf9e3;color:#b7950b;">TA1stmonthSurvey-Part1</div>
+            <div class="flow-chip" style="background:#fdf9e3;color:#b7950b;">TA1stmonthSurvey-Part2</div>
+            <div class="flow-chip" style="background:#fdf9e3;color:#b7950b;">TASatisfaction-afterstart</div>
+            <div class="flow-chip" style="background:#fdf9e3;color:#b7950b;">TASatisfaction-afterprobation</div>
+          </div>
+        </div>
+        <div class="arrow">›</div>
+        <div class="pipeline-stage">
+          <div class="stage-header" style="background:#8e44ad;">Contract / Convert</div>
+          <div class="stage-flows" style="border-color:#8e44ad;">
+            <div class="flow-chip" style="background:#f5eefb;color:#8e44ad;">TAContractRenewPart-1</div>
+            <div class="flow-chip" style="background:#f5eefb;color:#8e44ad;">TAContractRenewPart-2</div>
+            <div class="flow-chip" style="background:#f5eefb;color:#8e44ad;">TAManualRenewContract</div>
+            <div class="flow-chip" style="background:#f5eefb;color:#8e44ad;">TAOldContractRenewalEvaluation</div>
+            <div class="flow-chip" style="background:#f5eefb;color:#8e44ad;">TAConvertEmployment</div>
+          </div>
+        </div>
+        <div class="arrow">›</div>
+        <div class="pipeline-stage">
+          <div class="stage-header" style="background:#c0392b;">Resign / Exit</div>
+          <div class="stage-flows" style="border-color:#c0392b;">
+            <div class="flow-chip" style="background:#fde8e8;color:#c0392b;">TAResign&amp;Exitinterviews</div>
+            <div class="flow-chip" style="background:#fde8e8;color:#c0392b;">TACancelResign</div>
+            <div class="flow-chip" style="background:#fde8e8;color:#c0392b;">TArequestcancellationof<br>resignation&amp;postpone</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Org Chart -->
+    <h3 style="margin-top:22px;">🏢 Org Chart &amp; Transfer (Critical Redundancy Zone)</h3>
+    <div class="pipeline-wrap" style="margin-top:10px;">
+      <div class="pipeline">
+        <div class="pipeline-stage">
+          <div class="stage-header" style="background:#c0392b;">⚠️ Org Chart Approval<br>(5 → ควรเหลือ 2)</div>
+          <div class="stage-flows" style="border-color:#c0392b;">
+            <div class="flow-chip" style="background:#eaf2fb;color:#2E75B6;">NEWTAApproveOrganizationChart-Part1 <span class="badge">✓</span></div>
+            <div class="flow-chip" style="background:#eaf2fb;color:#2E75B6;">NEWTAApproveOrganizationChart-Part2 <span class="badge">✓</span></div>
+            <div class="flow-chip" style="background:#fde8e8;color:#c0392b;opacity:.5;">TAApproveOrganizationChartPart-1 <span class="badge">DEL</span></div>
+            <div class="flow-chip" style="background:#fde8e8;color:#c0392b;opacity:.5;">TAApproveOrgchart <span class="badge">DEL</span></div>
+            <div class="flow-chip" style="background:#fde8e8;color:#c0392b;opacity:.5;">Copyof-TAApproveOrgchart <span class="badge">DEL</span></div>
+          </div>
+        </div>
+        <div class="arrow">›</div>
+        <div class="pipeline-stage">
+          <div class="stage-header" style="background:#17a589;">Transfer</div>
+          <div class="stage-flows" style="border-color:#17a589;">
+            <div class="flow-chip" style="background:#e8f8f5;color:#17a589;">TAControllerflowTransferapproval</div>
+            <div class="flow-chip" style="background:#e8f8f5;color:#17a589;">TATransferApprovalForm</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ PAGE 3: REDUNDANCY ═══════════════════ -->
+<div class="page" id="page-redundancy">
+  <div class="card">
+    <h2>⚠️ Redundancy Analysis — Flows ที่ซ้ำซ้อนและควร Consolidate</h2>
+    <table>
+      <tr>
+        <th>กลุ่ม</th><th>Flows ปัจจุบัน</th><th>แนะนำ</th><th>ลด Actions</th><th>Priority</th><th>หมายเหตุ</th>
+      </tr>
+      <tr>
+        <td><b>Org Chart Approval</b></td>
+        <td>
+          ✅ NEWTAApproveOrgChart-Part1<br>
+          ✅ NEWTAApproveOrgChart-Part2<br>
+          <del>TAApproveOrganizationChartPart-1</del><br>
+          <del>TAApproveOrgchart</del><br>
+          <del>Copyof-TAApproveOrgchart</del>
+        </td>
+        <td><span class="tag green">เก็บ NEW Part-1/2</span><br><span class="tag red">ลบ 3 flows เก่า</span></td>
+        <td>~90 actions</td>
+        <td><span class="tag red">CRITICAL</span></td>
+        <td>5 flows ทำงานซ้ำกันทุก logic</td>
+      </tr>
+      <tr>
+        <td><b>Hiring Approve Form</b></td>
+        <td>
+          ✅ TAHiringApproveRequestFormV2NEW<br>
+          <del>TAHiringApproveRequestFormV2</del><br>
+          <del>TAHiringApproveRequestForm (V1)</del>
+        </td>
+        <td><span class="tag green">เก็บ V2NEW</span><br><span class="tag red">ลบ V1, V2</span></td>
+        <td>~60 actions</td>
+        <td><span class="tag red">HIGH</span></td>
+        <td>ตรวจสอบก่อนลบว่า V1/V2 ยังมี form ที่ใช้งานอยู่ไหม</td>
+      </tr>
+      <tr>
+        <td><b>Probation Evaluation Part-1</b></td>
+        <td>
+          ✅ TAProbationEvaluationPart-1<br>
+          <del>TAProbationEvaluationPart-1[URGENT]</del><br>
+          <del>TAProbationProbationEval-Part3Resubmit</del>
+        </td>
+        <td><span class="tag green">รวม [URGENT] เป็น condition ใน main flow</span><br><span class="tag orange">Resubmit → child flow</span></td>
+        <td>~45 actions</td>
+        <td><span class="tag red">HIGH</span></td>
+        <td>[URGENT] น่าจะแค่เปลี่ยน notification priority ไม่ต่างกันเชิง logic</td>
+      </tr>
+      <tr>
+        <td><b>Propose CV</b></td>
+        <td>
+          ✅ TAProposeCV<br>
+          TAProposeCV-Instantformerged<br>
+          TAProposeCVcreateInterview<br>
+          TAProposeCVsenttointerview
+        </td>
+        <td><span class="tag orange">ตรวจ logic จริงก่อน — อาจ sequential</span><br>เป้าหมาย: เหลือ 2 flows</td>
+        <td>~30 actions</td>
+        <td><span class="tag orange">MED</span></td>
+        <td>Part-1→2 อาจ trigger chain — ต้อง map order ก่อน</td>
+      </tr>
+      <tr>
+        <td><b>Satisfaction Survey</b></td>
+        <td>
+          TA1stmonthSurvey-Part1<br>
+          TA1stmonthSurvey-Part2<br>
+          TASatisfaction-afterstart<br>
+          TASatisfaction-afterprobation
+        </td>
+        <td><span class="tag orange">รวม scheduled survey เป็น 1 flow ที่มี switch</span></td>
+        <td>~25 actions</td>
+        <td><span class="tag orange">MED</span></td>
+        <td>ทั้ง 4 flows ทำ "ส่ง survey link + record" ต่างกันแค่ timing</td>
+      </tr>
+      <tr>
+        <td><b>Manpower Requisition</b></td>
+        <td>
+          TAManpowerRequisitionForm<br>
+          TAManpowerRequisitionForm-Edit<br>
+          TAManpowerRequisitionForm-sendemail<br>
+          TAManpowerRequisition-Manual<br>
+          TAManpowerRequisitionForm-Resubmit<br>
+          TARepairmanpower
+        </td>
+        <td><span class="tag blue">เป็น child flows อยู่แล้ว — review การเรียกกัน</span><br>เป้าหมาย: 1 main + 3 sub</td>
+        <td>~20 actions</td>
+        <td><span class="tag blue">REVIEW</span></td>
+        <td>ส่วนใหญ่เป็น sub-process ที่ถูกออกแบบให้แยก — อาจ OK</td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>🔁 Logic Patterns ที่ซ้ำกันข้าม Flows (ควรทำเป็น Module)</h2>
+    <table>
+      <tr><th>Pattern</th><th>พบใน</th><th>จำนวน Flow</th><th>แนะนำ Module</th></tr>
+      <tr>
+        <td><b>Multi-tier Approval Chain</b><br><small>Get approver → Start Approval → Wait → Route by result</small></td>
+        <td>OrgChart, Hiring, Contract, Probation, Transfer</td>
+        <td>11 flows (20%)</td>
+        <td><span class="tag blue">moduleApprovalEngine</span></td>
+      </tr>
+      <tr>
+        <td><b>Send Email Notification</b><br><small>Compose HTML → SendEmail → Log</small></td>
+        <td>ทุก domain</td>
+        <td>9 flows (16%)</td>
+        <td><span class="tag teal" style="background:#e8f8f5;color:#17a589;">moduleNotifyEmail</span></td>
+      </tr>
+      <tr>
+        <td><b>Teams Notification</b><br><small>Post adaptive card → Channel</small></td>
+        <td>OrgChart, Hiring, Probation</td>
+        <td>7 flows (13%)</td>
+        <td><span class="tag teal" style="background:#e8f8f5;color:#17a589;">moduleNotifyTeams</span></td>
+      </tr>
+      <tr>
+        <td><b>Get Employee Data from SP</b><br><small>GetItems filter by EmployeeID/Email → first()</small></td>
+        <td>Probation, NewJoiner, Contract, Resign</td>
+        <td>8 flows (14%)</td>
+        <td><span class="tag blue">moduleGetEmployee</span></td>
+      </tr>
+      <tr>
+        <td><b>Error Handling + Ticket Log</b><br><small>Catch → Create Ticket item → Teams error alert</small></td>
+        <td>ทุก domain</td>
+        <td>37 flows (67%)</td>
+        <td><span class="tag purple" style="background:#f5eefb;color:#8e44ad;">moduleLogError ✅ มีแล้ว</span></td>
+      </tr>
+      <tr>
+        <td><b>DOCX Generation</b><br><small>Muhimbi → Fill template → Email/Save to SP</small></td>
+        <td>OfferLetter, Contract, AutogenDOCX</td>
+        <td>3 flows</td>
+        <td><span class="tag orange">moduleGenerateDOCX</span></td>
+      </tr>
+      <tr>
+        <td><b>Status Update on SP Item</b><br><small>GetItem → PatchItem status field only</small></td>
+        <td>ทุก domain</td>
+        <td>15+ flows</td>
+        <td><span class="tag blue">moduleUpdateStatus</span></td>
+      </tr>
+      <tr>
+        <td><b>Write Audit Log</b><br><small>Compose log entry → Create item in Log list</small></td>
+        <td>OrgChart, Hiring, Probation</td>
+        <td>10 flows</td>
+        <td><span class="tag purple" style="background:#f5eefb;color:#8e44ad;">moduleWriteLog</span></td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════════ PAGE 4: MODULES ═══════════════════ -->
+<div class="page" id="page-modules">
+  <div class="card">
+    <h2>🧩 Proposed Modular Architecture — TA Domain</h2>
+    <p style="font-size:12px;color:var(--gray);margin-bottom:18px;">แต่ละ module = 1 HTTP-triggered child flow รับ JSON → ทำงาน → return JSON กลับ</p>
+
+    <div class="module-grid">
+      <!-- CORE DATA -->
+      <div class="module-card core">
+        <h4>🔵 moduleGetEmployee</h4>
+        <p>Get employee record จาก SharePoint โดย filter จาก EmployeeID หรือ Email — return object ครบ</p>
+        <p><b>Input:</b> filterType, filterValue<br><b>Output:</b> employeeObj (FullName, Dept, Manager, etc.)</p>
+        <div class="used-by">📌 ใช้โดย: Probation, NewJoiner, Contract, Resign, Transfer (8 flows)</div>
+      </div>
+
+      <div class="module-card core">
+        <h4>🔵 moduleUpsertSPItem</h4>
+        <p>Upsert (create/update) item ใน SharePoint list ที่กำหนด โดยรับ filterField + fields object</p>
+        <p><b>Input:</b> siteUrl, listName, filterField, filterValue, fields<br><b>Output:</b> action, itemId</p>
+        <div class="used-by">📌 ใช้โดย: ทุก process flow (15+ flows)</div>
+      </div>
+
+      <div class="module-card core">
+        <h4>🔵 moduleUpdateStatus</h4>
+        <p>Update เฉพาะ Status / ProcessingStatus field ใน SP item — เพื่อลด permission risk</p>
+        <p><b>Input:</b> siteUrl, listName, itemId, status, processingStatus<br><b>Output:</b> itemId</p>
+        <div class="used-by">📌 ใช้โดย: ทุก approval flow (15+ flows)</div>
+      </div>
+
+      <!-- APPROVAL -->
+      <div class="module-card approval">
+        <h4>🟡 moduleApprovalEngine</h4>
+        <p>จัดการ multi-tier approval ผ่าน ApprovalRegistry list — รับ chain JSON แล้วรัน step ต่อ step</p>
+        <p><b>Input:</b> requestID, requestType, chain JSON, sourceFlowID<br><b>Output:</b> status, currentStep, rejectedReason</p>
+        <div class="used-by">📌 ใช้โดย: OrgChart, Hiring, Probation, Contract, Transfer (11 flows)</div>
+      </div>
+
+      <div class="module-card approval">
+        <h4>🟡 moduleApproverChainBuilder</h4>
+        <p>สร้าง approver chain โดยใช้ Claude API หรือ rule table — ส่งคืน JSON chain พร้อมใช้</p>
+        <p><b>Input:</b> requestType, dept, grade, employeeID<br><b>Output:</b> totalSteps, chain[]</p>
+        <div class="used-by">📌 ใช้โดย: ทุก flow ที่มี dynamic approver</div>
+      </div>
+
+      <!-- NOTIFY -->
+      <div class="module-card notify">
+        <h4>🟢 moduleNotifyEmail</h4>
+        <p>ส่ง email notification ไปหา requester/approver พร้อม HTML template ตาม requestType</p>
+        <p><b>Input:</b> toEmail, requestType, status, requestID, rejectedReason?<br><b>Output:</b> messageId</p>
+        <div class="used-by">📌 ใช้โดย: 9 flows ทุก domain</div>
+      </div>
+
+      <div class="module-card notify">
+        <h4>🟢 moduleNotifyTeams</h4>
+        <p>ส่ง adaptive card ไปยัง Teams channel ที่กำหนด พร้อม action button</p>
+        <p><b>Input:</b> channelType, title, message, requestID, actionURL?<br><b>Output:</b> messageId</p>
+        <div class="used-by">📌 ใช้โดย: OrgChart, Hiring, Probation, Error alerts (7 flows)</div>
+      </div>
+
+      <!-- LOG -->
+      <div class="module-card log">
+        <h4>🟣 moduleWriteLog</h4>
+        <p>เขียน audit log entry ลง Logs list พร้อม timestamp, actor, flowID, action, remark</p>
+        <p><b>Input:</b> requestType, requestID, action, actor, flowID, remark?<br><b>Output:</b> logItemId</p>
+        <div class="used-by">📌 ใช้โดย: ทุก flow ที่ต้องการ audit trail (10+ flows)</div>
+      </div>
+
+      <div class="module-card log">
+        <h4>🟣 moduleLogError</h4>
+        <p>Catch error → Create Ticket ใน error list → Teams alert (มีอยู่แล้ว — ต้อง standardize)</p>
+        <p><b>Input:</b> flowID, errorMessage, requestID, context<br><b>Output:</b> ticketID</p>
+        <div class="used-by">📌 ใช้โดย: 37 flows ✅ มีแล้ว ต้อง centralize</div>
+      </div>
+
+      <!-- DOC -->
+      <div class="module-card doc">
+        <h4>🟠 moduleGenerateDOCX</h4>
+        <p>สร้าง DOCX จาก Muhimbi template โดยรับ templateName + fields object — save to SP + email</p>
+        <p><b>Input:</b> templateName, fields, saveToSP, emailTo?<br><b>Output:</b> fileUrl, emailSent</p>
+        <div class="used-by">📌 ใช้โดย: OfferLetter, Contract, AutogenDOCX (3 flows)</div>
+      </div>
+    </div>
+
+    <h3 style="margin-top:20px;">Process Flow Architecture (หลัง Modularization)</h3>
+    <div style="background:#f7fafd;border:1px solid #d0dce8;border-radius:8px;padding:16px;font-size:12px;font-family:monospace;line-height:2;">
+<pre style="white-space:pre-wrap;font-size:12px;">
+ทุก Process Flow ใช้โครงสร้าง 5 ส่วน:
+
+1. TRIGGER
+   └─ SharePoint form / HTTP / Schedule
+
+2. PRE-PROCESS (HTTP POST → module)
+   ├─ moduleGetEmployee        → ดึงข้อมูล employee
+   ├─ moduleApproverChainBuilder → สร้าง chain
+   └─ moduleUpsertSPItem       → บันทึก ProcessList
+
+3. APPROVAL ENGINE (HTTP POST → moduleApprovalEngine)
+   ├─ Create ApprovalRegistry record
+   ├─ Run Step 1..N (sequential)
+   │   ├─ Approved → Next step
+   │   │   └─ Complete → moduleNotifyEmail + moduleWriteLog
+   │   └─ Rejected → moduleNotifyEmail + moduleWriteLog
+   └─ Update ProcessList.ApprovalComplete
+
+4. POST-PROCESS (HTTP POST → module)
+   ├─ moduleUpdateStatus        → update status
+   ├─ moduleGenerateDOCX        → สร้างเอกสาร (ถ้ามี)
+   └─ moduleUpsertSPItem        → update related lists
+
+5. NOTIFY
+   ├─ moduleNotifyEmail         → แจ้ง requester
+   └─ moduleNotifyTeams         → แจ้ง HR channel
+</pre>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ PAGE 5: LOG MAPPING ═══════════════════ -->
+<div class="page" id="page-logs">
+  <div class="card">
+    <h2>📋 Log &amp; Tracking Map — ทุก Flow → Logs &amp; Module Mapping</h2>
+    <p style="font-size:12px;color:var(--gray);margin-bottom:14px;">แสดงว่า flow ไหน map กับ SharePoint list ไหน มี log หรือยัง และควรเพิ่ม module ใด</p>
+    <table class="log-map">
+      <tr>
+        <th>Flow Name</th>
+        <th>Trigger Type</th>
+        <th>Source SP List</th>
+        <th>Error Log</th>
+        <th>Audit Log</th>
+        <th>Modules ที่ควรใช้</th>
+        <th>Status</th>
+      </tr>
+      <!-- HIRING -->
+      <tr><td colspan="7" style="background:#f5eefb;font-weight:700;color:#8e44ad;">📌 HIRING PIPELINE</td></tr>
+      <tr><td>TAManpowerRequisitionForm</td><td>Form/Webhook</td><td>ManpowerRequisition</td><td><span class="tag green">✅</span></td><td><span class="tag red">❌</span></td><td><span class="tag blue">Upsert</span><span class="tag purple">WriteLog</span><span class="tag teal" style="background:#e8f8f5;color:#17a589;">NotifyEmail</span></td><td><span class="tag gray">Active</span></td></tr>
+      <tr><td>TAManpowerRequisitionForm-Edit</td><td>HTTP</td><td>ManpowerRequisition</td><td><span class="tag green">✅</span></td><td><span class="tag red">❌</span></td><td><span class="tag blue">UpdateStatus</span><span class="tag purple">WriteLog</span></td><td><span class="tag gray">Active</span></td></tr>
+      <tr><td>TAManpowerRequisitionForm-sendemail</td><td>HTTP</td><td>ManpowerRequisition</td><td><span class="tag green">✅</span></td><td><span class="tag red">❌</span></td><td><span class="tag teal" style="background:#e8f8f5;color:#17a589;">NotifyEmail</span><span class="tag teal" style="background:#e8f8f5;color:#17a589;">NotifyTeams</span></td><td><span class="tag gray">Active</span></td></tr>
+      <tr><td>TAManpowerRequisitionForm-Resubmit</td><td>HTTP</td><td>ManpowerRequisition</td><td><span class="tag green">✅</span></td><td><span class="tag red">❌</span></td><td><span class="tag yellow" style="background:#fdf9e3;color:#b7950b;">ApprovalEngine</span><span class="tag blue">UpdateStatus</span></td><td><span class="tag gray">Active</span></td></tr>
+      <tr><td>TAManpowerRequisition-Manual</td><td>HTTP</td><td>ManpowerRequisition</td><td><span class="tag green">✅</span></td><td><span class="tag red">❌</span></td><td><span class="tag yellow" style="background:#fdf9e3;color:#b7950b;">ApprovalEngine</span></td><td><span class="tag gray">Active</span></td></tr>
+      <tr><td>TARepairmanpower</td><td>HTTP</td><td>ManpowerRequisition</td><td><span class="tag green">✅</span></td><td><span class="tag red">❌</span></td><td><span class="tag blue">UpdateStatus</span></td><td><span class="tag gray">Active</span></td></tr>
+      <tr><td>TAHiringApproveRequestFormV2NEW</td><td>Form/Webhook</td><td>HiringRequest</td><td><span class="tag green">✅</span></td><td><span class="tag red">❌</span></td><td><span class="tag yellow" style="background:#fdf9e3;color:#b7950b;">ApprovalEngine</span><span class="tag teal" style="background:#e8f8f5;color:#17a589;">NotifyEmail</span><span class="tag purple">WriteLog</span></td><td><span class="tag green">KEEP</span></td></tr>
+      <tr><td>TAHiringApproveRequestFormV2</td><td>Form/Webhook</td><td>HiringRequest</td><td><span class="tag green">✅</span></td><td><span class="tag red">❌</span></td><td>—</td><td><span class="tag red">DELETE</span></td></tr>
+      <tr><td>TAHiringApproveRequestForm</td><td>Form/Webhook</td><td>HiringRequest</td><td><span class="tag orange">⚠️</span></td><td><span class="tag red">❌</span></td><td>—</td><td><span class="tag red">DELETE</span></td></tr>
+      <tr><td>TA--Merged--ManualHiringApprove</td><td>HTTP</td><td>HiringRequest</td><td><span class="tag green">✅</span></td><td><span class="tag red">❌</span></td><td><span class="tag yellow" style="background:#fdf9e3;color:#b7950b;">ApprovalEngine</span></td><td><span class="tag gray">Active</span></td></tr>
+      <tr><td>TAApplicationForm</td><td>Form/Webhook</td><td>Candidates</td><td><span class="tag green">✅</span></td><td><span class="tag red">❌</span></td><td><span class="tag blue">Upsert</span><span class="tag purple">WriteLog</span></td><td><span class="tag gray">Active</span></td></tr>
+      <tr><td>TACandidateTestPart-1</td><td>OpenAPI</td><td>CandidateTest</td><td><span class="tag green">✅</span></td><td><span class="tag red">❌</span></td><td><span class="tag blue">Upsert</span><span class="tag teal" style="background:#e8f8f5;color:#17a589;">NotifyEmail</span></td><td><span class="tag gray">Active</span></td></tr>
+      <tr><td>TACandidateTestPart-2</td><td>OpenAPI</td><td>CandidateTest</td><td><span class="tag green">✅</span></td><td><span class="tag red">❌</span></td><td><span class="tag blue">UpdateStatus</span></td><td><span class="tag gray">Active</span></td></tr>
+      <tr><td>TAProposeCV</td><td>HTTP</td><td>Candidates</td><td><span class="tag green">✅</span></td><td><span class="tag red">❌</span></td><td><span class="tag blue">UpdateStatus</span><span class="tag teal" style="background:#e8f8f5;color:#17a589;">NotifyEmail</span></td><td><span class="tag green">KEEP</span></td></tr>
+      <tr><td>TAProposeCV-Instantformerged</td><td>HTTP</td><td>Candidates</td><td><span class="tag orange">⚠️</span></td><td><span class="tag red">❌</span></td><td>—</td><td><span class="tag orange">REVIEW</span></td></tr>
+      <tr><td>TAProposeCVcreateInterview</td><td>HTTP</td><td>Interview</td><td><span class="tag green">✅</span></td><td><span class="tag red">❌</span></td><td><span class="tag blue">Upsert</span></td><td><span class="tag gray">Active</span></td></tr>
+      <tr><td>TAProposeCVsenttointerview</td><td>HTTP</td><td>Interview</td><td><span class="tag green">✅</span></td><td><span class="tag red">❌</span></td><td><span class="tag teal" style="background:#e8f8f5;color:#17a589;">NotifyEmail</span></td><td><span class="tag gray">Active</span></td></tr>
+      <tr><td>TAInterviewEvaluation</td><td>OpenAPI</td><td>Interview</td><td><span class="tag green">✅</span></td><td><span class="tag red">❌</span></td><td><span class="tag blue">UpdateStatus</span><span class="tag purple">WriteLog</span></td><td><span class="tag gray">Active</span></td></tr>
+      <tr><td>TAInterviewEvaluation-adjustfile</td><td>HTTP</td><td>Interview</td><td><span class="tag green">✅</span></td><td><span class="tag red">❌</span></td><td><span class="tag blue">UpdateStatus</span></td><td><span class="tag gray">Active</span></td></tr>
+      <tr><td>TAOfferLetterPart-1</td><td>HTTP</td><td>OfferLetter</td><td><span class="tag green">✅</span></td><td><span class="tag red">❌</span></td><td><span class="tag orange">GenDOCX</span><span class="tag blue">Upsert</span></td><td><span class="tag gray">Active</span></td></tr>
+      <tr><td>TAOfferLetterPart-2</td><td>HTTP</td><td>OfferLetter</td><td><span class="tag green">✅</span></td><td><span class="tag red">❌</span></td><td><span class="tag teal" style="background:#e8f8f5;color:#17a589;">NotifyEmail</span></td><td><span class="tag gray">Active</span></td></tr>
+      <tr><td>TAAutogenerateContractDocDOCX</td><td>OpenAPI</td><td>Contract</td><td><span class="tag green">✅</span></td><td><span class="tag red">❌</span></td><td><span class="tag orange">GenDOCX</span></td><td><span class="tag gray">Active</span></td></tr>
+      <tr><td>TAReferralPrograms</td><td>Form/Webhook</td><td>Referral</td><td><span class="tag green">✅</span></td><td><span class="tag red">❌</span></td><td><span class="tag blue">Upsert</span><span class="tag purple">WriteLog</span></td><td><span class="tag gray">Active</span></td></tr>
+      <tr><td>TAReferral-Reimbursement</td><td>HTTP</td><td>Referral</td><td><span class="tag green">✅</span></td><td><span class="tag red">❌</span></td><td><span class="tag yellow" style="background:#fdf9e3;color:#b7950b;">ApprovalEngine</span><span class="tag teal" style="background:#e8f8f5;color:#17a589;">NotifyEmail</span></td><td><span class="tag gray">Active</span></td></tr>
+      <tr><td>TAHiringApproveRequest-SiteInterview</td><td>HTTP</td><td>Interview</td><td><span class="tag green">✅</span></td><td><span class="tag red">❌</span></td><td><span class="tag yellow" style="background:#fdf9e3;color:#b7950b;">ApprovalEngine</span></td><td><span class="tag gray">Active</span></td></tr>
+      <tr><td>TASendattachmenttomanager</td><td>HTTP</td><td>Interview</td><td><span class="tag green">✅</span></td><td><span class="tag red">❌</span></td><td><span class="tag teal" style="background:#e8f8f5;color:#17a589;">NotifyEmail</span></td><td><span class="tag gray">Active</span></td></tr>
+
+      <!-- ONBOARDING -->
+      <tr><td colspan="7" style="background:#e0f7ea;font-weight:700;color:#1e8449;">🌱 ONBOARDING &amp; PROBATION</td></tr>
+      <tr><td>TANewJoinertoEmployeeDetails</td><td>OpenAPI</td><td>EmployeeDetails</td><td><span class="tag green">✅</span></td><td><span class="tag red">❌</span></td><td><span class="tag blue">Upsert</span><span class="tag purple">WriteLog</span></td><td><span class="tag gray">Active</span></td></tr>
+      <tr><td>TARunnewjoinerflow</td><td>HTTP</td><td>EmployeeDetails</td><td><span class="tag green">✅</span></td><td><span class="tag red">❌</span></td><td><span class="tag blue">GetEmployee</span><span class="tag teal" style="background:#e8f8f5;color:#17a589;">NotifyEmail</span></td><td><span class="tag gray">Active</span></td></tr>
+      <tr><td>TAEditbuddyemail</td><td>HTTP</td><td>EmployeeDetails</td><td><span class="tag green">✅</span></td><td><span class="tag red">❌</span></td><td><span class="tag blue">UpdateStatus</span></td><td><span class="tag gray">Active</span></td></tr>
+      <tr><td>TARunnewjoinersurvey(1week)</td><td>Scheduled</td><td>EmployeeDetails</td><td><span class="tag green">✅</span></td><td><span class="tag red">❌</span></td><td><span class="tag teal" style="background:#e8f8f5;color:#17a589;">NotifyEmail</span></td><td><span class="tag gray">Active</span></td></tr>
+      <tr><td>TAProbationEvaluationPart-1</td><td>Scheduled</td><td>ProbationEval</td><td><span class="tag green">✅</span></td><td><span class="tag red">❌</span></td><td><span class="tag blue">GetEmployee</span><span class="tag teal" style="background:#e8f8f5;color:#17a589;">NotifyEmail</span></td><td><span class="tag green">KEEP</span></td></tr>
+      <tr><td>TAProbationEvaluationPart-1[URGENT]</td><td>Scheduled</td><td>ProbationEval</td><td><span class="tag orange">⚠️</span></td><td><span class="tag red">❌</span></td><td>—</td><td><span class="tag red">MERGE→PART1</span></td></tr>
+      <tr><td>TAProbationEvaluationPart-2</td><td>HTTP</td><td>ProbationEval</td><td><span class="tag green">✅</span></td><td><span class="tag red">❌</span></td><td><span class="tag yellow" style="background:#fdf9e3;color:#b7950b;">ApprovalEngine</span><span class="tag blue">UpdateStatus</span></td><td><span class="tag gray">Active</span></td></tr>
+      <tr><td>TAProbationGodclass</td><td>HTTP</td><td>ProbationEval</td><td><span class="tag orange">⚠️</span></td><td><span class="tag red">❌</span></td><td>—</td><td><span class="tag orange">REFACTOR</span></td></tr>
+      <tr><td>TAProbationEvalFormForHR[merged]</td><td>HTTP</td><td>ProbationEval</td><td><span class="tag green">✅</span></td><td><span class="tag red">❌</span></td><td><span class="tag blue">UpdateStatus</span><span class="tag purple">WriteLog</span></td><td><span class="tag gray">Active</span></td></tr>
+      <tr><td>TAProbationProbationEvalPart-3Resubmit</td><td>HTTP</td><td>ProbationEval</td><td><span class="tag green">✅</span></td><td><span class="tag red">❌</span></td><td><span class="tag yellow" style="background:#fdf9e3;color:#b7950b;">ApprovalEngine</span></td><td><span class="tag gray">Active</span></td></tr>
+      <tr><td>TA1stmonthSurvey-Part1</td><td>Scheduled</td><td>EmployeeDetails</td><td><span class="tag green">✅</span></td><td><span class="tag red">❌</span></td><td><span class="tag teal" style="background:#e8f8f5;color:#17a589;">NotifyEmail</span></td><td><span class="tag orange">REVIEW</span></td></tr>
+      <tr><td>TA1stmonthSurvey-Part2</td><td>HTTP</td><td>SurveyResponse</td><td><span class="tag green">✅</span></td><td><span class="tag red">❌</span></td><td><span class="tag blue">Upsert</span></td><td><span class="tag orange">REVIEW</span></td></tr>
+      <tr><td>TASatisfaction-afterstartdate</td><td>Scheduled</td><td>EmployeeDetails</td><td><span class="tag green">✅</span></td><td><span class="tag red">❌</span></td><td><span class="tag teal" style="background:#e8f8f5;color:#17a589;">NotifyEmail</span></td><td><span class="tag gray">Active</span></td></tr>
+      <tr><td>TASatisfaction-afterprobation</td><td>Scheduled</td><td>EmployeeDetails</td><td><span class="tag green">✅</span></td><td><span class="tag red">❌</span></td><td><span class="tag teal" style="background:#e8f8f5;color:#17a589;">NotifyEmail</span></td><td><span class="tag gray">Active</span></td></tr>
+
+      <!-- CONTRACT -->
+      <tr><td colspan="7" style="background:#f5eefb;font-weight:700;color:#8e44ad;">📝 CONTRACT &amp; EMPLOYMENT</td></tr>
+      <tr><td>TAContractRenewPart-1</td><td>HTTP</td><td>ContractRenewal</td><td><span class="tag green">✅</span></td><td><span class="tag red">❌</span></td><td><span class="tag blue">GetEmployee</span><span class="tag teal" style="background:#e8f8f5;color:#17a589;">NotifyEmail</span></td><td><span class="tag gray">Active</span></td></tr>
+      <tr><td>TAContractRenewPart-2</td><td>HTTP</td><td>ContractRenewal</td><td><span class="tag green">✅</span></td><td><span class="tag red">❌</span></td><td><span class="tag yellow" style="background:#fdf9e3;color:#b7950b;">ApprovalEngine</span><span class="tag orange">GenDOCX</span></td><td><span class="tag gray">Active</span></td></tr>
+      <tr><td>TAManualRenewContract</td><td>HTTP</td><td>ContractRenewal</td><td><span class="tag green">✅</span></td><td><span class="tag red">❌</span></td><td><span class="tag yellow" style="background:#fdf9e3;color:#b7950b;">ApprovalEngine</span></td><td><span class="tag gray">Active</span></td></tr>
+      <tr><td>TAOldContractRenewalEvaluation</td><td>HTTP</td><td>ContractRenewal</td><td><span class="tag green">✅</span></td><td><span class="tag red">❌</span></td><td><span class="tag yellow" style="background:#fdf9e3;color:#b7950b;">ApprovalEngine</span><span class="tag purple">WriteLog</span></td><td><span class="tag gray">Active</span></td></tr>
+      <tr><td>TAConvertEmployment</td><td>HTTP</td><td>EmployeeDetails</td><td><span class="tag green">✅</span></td><td><span class="tag red">❌</span></td><td><span class="tag blue">Upsert</span><span class="tag teal" style="background:#e8f8f5;color:#17a589;">NotifyEmail</span><span class="tag purple">WriteLog</span></td><td><span class="tag gray">Active</span></td></tr>
+      <tr><td>TAAutogenerateContractDocDOCX</td><td>OpenAPI</td><td>Contract</td><td><span class="tag green">✅</span></td><td><span class="tag red">❌</span></td><td><span class="tag orange">GenDOCX</span></td><td><span class="tag gray">Active</span></td></tr>
+
+      <!-- ORG CHART -->
+      <tr><td colspan="7" style="background:#eaf2fb;font-weight:700;color:#1f3864;">🏢 ORG CHART &amp; TRANSFER</td></tr>
+      <tr><td>NEWTAApproveOrganizationChart-Part1</td><td>OpenAPI</td><td>OrgChartRequest</td><td><span class="tag green">✅</span></td><td><span class="tag green">✅</span></td><td><span class="tag yellow" style="background:#fdf9e3;color:#b7950b;">ApprovalEngine</span><span class="tag purple">WriteLog</span></td><td><span class="tag green">KEEP</span></td></tr>
+      <tr><td>NEWTAApproveOrganizationChart-Part2</td><td>HTTP</td><td>OrgChartRequest</td><td><span class="tag green">✅</span></td><td><span class="tag green">✅</span></td><td><span class="tag blue">UpdateStatus</span><span class="tag teal" style="background:#e8f8f5;color:#17a589;">NotifyTeams</span></td><td><span class="tag green">KEEP</span></td></tr>
+      <tr><td>TAApproveOrganizationChartPart-1</td><td>Form/Webhook</td><td>OrgChartRequest</td><td><span class="tag orange">⚠️</span></td><td><span class="tag red">❌</span></td><td>—</td><td><span class="tag red">DELETE</span></td></tr>
+      <tr><td>TAApproveOrgchart</td><td>Form/Webhook</td><td>OrgChartRequest</td><td><span class="tag orange">⚠️</span></td><td><span class="tag red">❌</span></td><td>—</td><td><span class="tag red">DELETE</span></td></tr>
+      <tr><td>Copyof-TAApproveOrgchart</td><td>Form/Webhook</td><td>OrgChartRequest</td><td><span class="tag red">❌</span></td><td><span class="tag red">❌</span></td><td>—</td><td><span class="tag red">DELETE NOW</span></td></tr>
+      <tr><td>TAControllerflowTransferapproval</td><td>HTTP</td><td>Transfer</td><td><span class="tag green">✅</span></td><td><span class="tag red">❌</span></td><td><span class="tag yellow" style="background:#fdf9e3;color:#b7950b;">ApprovalEngine</span></td><td><span class="tag gray">Active</span></td></tr>
+      <tr><td>TATransferApprovalForm</td><td>Form/Webhook</td><td>Transfer</td><td><span class="tag green">✅</span></td><td><span class="tag red">❌</span></td><td><span class="tag yellow" style="background:#fdf9e3;color:#b7950b;">ApprovalEngine</span><span class="tag teal" style="background:#e8f8f5;color:#17a589;">NotifyEmail</span></td><td><span class="tag gray">Active</span></td></tr>
+
+      <!-- RESIGN -->
+      <tr><td colspan="7" style="background:#fde8e8;font-weight:700;color:#c0392b;">🔴 RESIGN &amp; EXIT</td></tr>
+      <tr><td>TAResign&amp;Exitinterviews</td><td>Form/Webhook</td><td>Resign</td><td><span class="tag green">✅</span></td><td><span class="tag red">❌</span></td><td><span class="tag blue">UpdateStatus</span><span class="tag teal" style="background:#e8f8f5;color:#17a589;">NotifyEmail</span><span class="tag purple">WriteLog</span></td><td><span class="tag gray">Active</span></td></tr>
+      <tr><td>TACancelResign</td><td>Form/Webhook</td><td>Resign</td><td><span class="tag green">✅</span></td><td><span class="tag red">❌</span></td><td><span class="tag blue">UpdateStatus</span></td><td><span class="tag gray">Active</span></td></tr>
+      <tr><td>TArequestcancellation&amp;postpone</td><td>Form/Webhook</td><td>Resign</td><td><span class="tag green">✅</span></td><td><span class="tag red">❌</span></td><td><span class="tag blue">UpdateStatus</span><span class="tag teal" style="background:#e8f8f5;color:#17a589;">NotifyEmail</span></td><td><span class="tag gray">Active</span></td></tr>
+    </table>
+  </div>
+  <div class="card" style="background:#fffbe6;border:1px solid #f0c040;">
+    <h2>⚡ สรุป: Audit Log ขาดทุก flow — ควรเพิ่ม moduleWriteLog</h2>
+    <p style="font-size:13px;">ปัจจุบัน Error Log (Ticket) มี 37/55 flows แต่ <b>Audit Log ยังไม่มีเลยแม้แต่ flow เดียว</b> ทั้งที่ Logs list schema ถูกออกแบบไว้แล้ว <br>การ tracking ว่า flow ไหน → action ไหน → ใครทำ ต้องใช้ <b>moduleWriteLog</b> ทุกจุดที่ approval เสร็จหรือ status เปลี่ยน</p>
+    <p style="font-size:12px;margin-top:8px;"><b>Required fields:</b> Timestamp, RequestType, RequestID, ApprovalRegID, Action, Actor, FlowID, Remark</p>
+  </div>
+</div>
+
+<!-- ═══════════════════ PAGE 6: TIMELINE ═══════════════════ -->
+<div class="page" id="page-timeline">
+  <div class="card">
+    <h2>📅 Migration Timeline — TA Flow Modularization</h2>
+    <p style="font-size:12px;color:var(--gray);margin-bottom:16px;">ประมาณการเวลาสำหรับทีม 1 คน (ทำควบคู่กับงาน HR ปกติ) — ปรับตาม capacity จริง</p>
+
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;">
+      <div style="background:#fde8e8;border-radius:8px;padding:12px;text-align:center;">
+        <div style="font-size:24px;font-weight:800;color:var(--red)">Phase 0</div>
+        <div style="font-size:12px;font-weight:700;margin-top:4px;">Audit &amp; Cleanup</div>
+        <div style="font-size:11px;color:var(--gray)">1–2 สัปดาห์</div>
+      </div>
+      <div style="background:#fdf0e0;border-radius:8px;padding:12px;text-align:center;">
+        <div style="font-size:24px;font-weight:800;color:var(--orange)">Phase 1</div>
+        <div style="font-size:12px;font-weight:700;margin-top:4px;">Build Core Modules</div>
+        <div style="font-size:11px;color:var(--gray)">2–3 สัปดาห์</div>
+      </div>
+      <div style="background:#eaf2fb;border-radius:8px;padding:12px;text-align:center;">
+        <div style="font-size:24px;font-weight:800;color:var(--blue)">Phase 2</div>
+        <div style="font-size:12px;font-weight:700;margin-top:4px;">Migrate Hiring</div>
+        <div style="font-size:11px;color:var(--gray)">3–4 สัปดาห์</div>
+      </div>
+      <div style="background:#e0f7ea;border-radius:8px;padding:12px;text-align:center;">
+        <div style="font-size:24px;font-weight:800;color:var(--green)">Phase 3</div>
+        <div style="font-size:12px;font-weight:700;margin-top:4px;">Migrate Remaining</div>
+        <div style="font-size:11px;color:var(--gray)">4–6 สัปดาห์</div>
+      </div>
+    </div>
+
+    <div class="gantt-wrap">
+      <div class="gantt">
+        <div class="gantt-header">
+          <div>งาน</div>
+          <div>W1</div><div>W2</div><div>W3</div><div>W4</div>
+          <div>W5</div><div>W6</div><div>W7</div><div>W8</div>
+          <div>W9</div><div>W10</div><div>W11</div><div>W12</div>
+        </div>
+
+        <!-- PHASE 0 -->
+        <div class="gantt-row"><div class="phase-title">🔴 PHASE 0 — Audit &amp; Cleanup (ก่อน build อะไรทั้งนั้น)</div></div>
+        <div class="gantt-row">
+          <div class="gantt-label">Map ทุก flow<br><small>ชื่อ, trigger, SP list, ใช้งานอยู่ไหม</small></div>
+          <div class="gantt-cell"><div class="gantt-bar" style="left:5%;width:90%;background:#c0392b;">Inventory all 55 flows</div></div>
+          <div class="gantt-cell"></div>
+          <div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div>
+          <div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div>
+          <div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div>
+        </div>
+        <div class="gantt-row">
+          <div class="gantt-label">ลบ flows ซ้ำ (OrgChart 3 เก่า, HiringV1/V2)<br><small>ต้อง confirm ไม่มี form ใช้งานก่อน</small></div>
+          <div class="gantt-cell"><div class="gantt-bar" style="left:40%;width:60%;background:#c0392b;">Confirm active forms</div></div>
+          <div class="gantt-cell"><div class="gantt-bar" style="left:5%;width:90%;background:#e74c3c;">Delete duplicate flows</div></div>
+          <div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div>
+          <div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div>
+          <div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div>
+        </div>
+        <div class="gantt-row">
+          <div class="gantt-label">สร้าง Flow Inventory Excel<br><small>ทุก flow พร้อม FlowID (GUID), status</small></div>
+          <div class="gantt-cell"></div>
+          <div class="gantt-cell"><div class="gantt-bar" style="left:5%;width:90%;background:#c0392b;">Document all flow GUIDs</div></div>
+          <div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div>
+          <div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div>
+          <div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div>
+        </div>
+
+        <!-- PHASE 1 -->
+        <div class="gantt-row"><div class="phase-title">🟠 PHASE 1 — Build Core Shared Modules (สร้าง building blocks)</div></div>
+        <div class="gantt-row">
+          <div class="gantt-label">สร้าง ApprovalRegistry SP List<br><small>columns ครบตาม schema</small></div>
+          <div class="gantt-cell"></div><div class="gantt-cell"></div>
+          <div class="gantt-cell"><div class="gantt-bar" style="left:5%;width:90%;background:#e67e22;">Create SP List</div></div>
+          <div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div>
+          <div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div>
+          <div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div>
+        </div>
+        <div class="gantt-row">
+          <div class="gantt-label">สร้าง Logs SP List<br><small>columns ครบ + index Timestamp, RequestID</small></div>
+          <div class="gantt-cell"></div><div class="gantt-cell"></div>
+          <div class="gantt-cell"><div class="gantt-bar" style="left:5%;width:90%;background:#e67e22;">Create Logs List</div></div>
+          <div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div>
+          <div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div>
+          <div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div>
+        </div>
+        <div class="gantt-row">
+          <div class="gantt-label">moduleGetEmployee<br><small>HTTP → Get SP item → return employee obj</small></div>
+          <div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div>
+          <div class="gantt-cell"><div class="gantt-bar" style="left:5%;width:90%;background:#e67e22;">Build + Test</div></div>
+          <div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div>
+          <div class="gantt-cell"></div><div class="gantt-cell"></div>
+          <div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div>
+        </div>
+        <div class="gantt-row">
+          <div class="gantt-label">moduleUpsertSPItem / UpdateStatus<br><small>2 modules พื้นฐาน</small></div>
+          <div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div>
+          <div class="gantt-cell"><div class="gantt-bar" style="left:5%;width:90%;background:#e67e22;">Build</div></div>
+          <div class="gantt-cell"><div class="gantt-bar" style="left:5%;width:50%;background:#d35400;">Test</div></div>
+          <div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div>
+          <div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div>
+        </div>
+        <div class="gantt-row">
+          <div class="gantt-label">moduleWriteLog + moduleLogError<br><small>standardize error &amp; audit logging</small></div>
+          <div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div>
+          <div class="gantt-cell"><div class="gantt-bar" style="left:5%;width:90%;background:#e67e22;">Build + Test</div></div>
+          <div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div>
+          <div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div>
+        </div>
+        <div class="gantt-row">
+          <div class="gantt-label">moduleNotifyEmail + moduleNotifyTeams<br><small>centralized notification</small></div>
+          <div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div>
+          <div class="gantt-cell"><div class="gantt-bar" style="left:5%;width:90%;background:#e67e22;">Build</div></div>
+          <div class="gantt-cell"><div class="gantt-bar" style="left:5%;width:50%;background:#d35400;">Test</div></div>
+          <div class="gantt-cell"></div><div class="gantt-cell"></div>
+          <div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div>
+        </div>
+        <div class="gantt-row">
+          <div class="gantt-label">moduleApprovalEngine<br><small>central approval + ApprovalRegistry</small></div>
+          <div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div>
+          <div class="gantt-cell"><div class="gantt-bar" style="left:5%;width:90%;background:#e67e22;">Build (complex)</div></div>
+          <div class="gantt-cell"><div class="gantt-bar" style="left:5%;width:90%;background:#d35400;">Test + UAT</div></div>
+          <div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div>
+        </div>
+
+        <!-- PHASE 2 -->
+        <div class="gantt-row"><div class="phase-title">🔵 PHASE 2 — Migrate Hiring Pipeline (งาน priority สูงสุด)</div></div>
+        <div class="gantt-row">
+          <div class="gantt-label">Migrate Manpower Requisition<br><small>plug modules เข้า existing flow</small></div>
+          <div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div>
+          <div class="gantt-cell"><div class="gantt-bar" style="left:5%;width:90%;background:#2E75B6;">Migrate + Test</div></div>
+          <div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div>
+        </div>
+        <div class="gantt-row">
+          <div class="gantt-label">Migrate Hiring Approve → V2NEW<br><small>delete V1/V2 หลัง migrate</small></div>
+          <div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div>
+          <div class="gantt-cell"><div class="gantt-bar" style="left:5%;width:90%;background:#2E75B6;">Migrate</div></div>
+          <div class="gantt-cell"><div class="gantt-bar" style="left:5%;width:60%;background:#1a5276;">UAT</div></div>
+          <div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div>
+        </div>
+        <div class="gantt-row">
+          <div class="gantt-label">Migrate ProposeCV + Interview<br><small>4 flows → 2 flows</small></div>
+          <div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div>
+          <div class="gantt-cell"><div class="gantt-bar" style="left:5%;width:90%;background:#2E75B6;">Migrate + Test</div></div>
+          <div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div>
+        </div>
+        <div class="gantt-row">
+          <div class="gantt-label">Migrate OfferLetter + AutogenDOCX<br><small>รวม moduleGenerateDOCX</small></div>
+          <div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div>
+          <div class="gantt-cell"><div class="gantt-bar" style="left:5%;width:90%;background:#2E75B6;">Migrate</div></div>
+          <div class="gantt-cell"><div class="gantt-bar" style="left:5%;width:50%;background:#1a5276;">Test</div></div>
+          <div class="gantt-cell"></div><div class="gantt-cell"></div>
+        </div>
+
+        <!-- PHASE 3 -->
+        <div class="gantt-row"><div class="phase-title">🟢 PHASE 3 — Migrate Remaining Domains</div></div>
+        <div class="gantt-row">
+          <div class="gantt-label">Migrate Probation + Survey<br><small>รวม [URGENT] เป็น condition</small></div>
+          <div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div>
+          <div class="gantt-cell"><div class="gantt-bar" style="left:5%;width:90%;background:#27ae60;">Migrate + Test</div></div>
+          <div class="gantt-cell"></div><div class="gantt-cell"></div>
+        </div>
+        <div class="gantt-row">
+          <div class="gantt-label">Migrate Contract Renew + Convert<br><small>plug moduleApprovalEngine</small></div>
+          <div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div>
+          <div class="gantt-cell"><div class="gantt-bar" style="left:5%;width:90%;background:#27ae60;">Migrate</div></div>
+          <div class="gantt-cell"><div class="gantt-bar" style="left:5%;width:50%;background:#1e8449;">Test</div></div>
+          <div class="gantt-cell"></div>
+        </div>
+        <div class="gantt-row">
+          <div class="gantt-label">Migrate NewJoiner + Resign + Referral<br><small>flows เล็ก เร็ว</small></div>
+          <div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div>
+          <div class="gantt-cell"><div class="gantt-bar" style="left:5%;width:90%;background:#27ae60;">Migrate + Test</div></div>
+          <div class="gantt-cell"></div>
+        </div>
+        <div class="gantt-row">
+          <div class="gantt-label">✅ Full UAT + Go-Live<br><small>ตรวจ Logs list ครบ, ลบ flows เก่า</small></div>
+          <div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div><div class="gantt-cell"></div>
+          <div class="gantt-cell"><div class="gantt-bar" style="left:5%;width:90%;background:#1e8449;">UAT + Go-Live</div></div>
+        </div>
+      </div>
+    </div>
+
+    <h3 style="margin-top:22px;">⏱️ ประมาณการเวลาต่อ Phase</h3>
+    <table>
+      <tr><th>Phase</th><th>งานหลัก</th><th>เวลาประมาณ</th><th>Dependency</th><th>Risk</th></tr>
+      <tr>
+        <td><b>Phase 0</b><br><small>Audit &amp; Cleanup</small></td>
+        <td>Map 55 flows, confirm active forms, ลบ 5 flows (OrgChart + HiringV1/V2), สร้าง inventory Excel</td>
+        <td><b>1–2 สัปดาห์</b></td>
+        <td>—</td>
+        <td><span class="tag orange">ต้องรอ confirm จาก TA ว่า form ไหนยังใช้อยู่</span></td>
+      </tr>
+      <tr>
+        <td><b>Phase 1</b><br><small>Core Modules</small></td>
+        <td>สร้าง ApprovalRegistry List, Logs List, 8 module flows พร้อม test</td>
+        <td><b>2–3 สัปดาห์</b></td>
+        <td>Phase 0 เสร็จ</td>
+        <td><span class="tag orange">moduleApprovalEngine complex ที่สุด — ควร prototype ก่อน</span></td>
+      </tr>
+      <tr>
+        <td><b>Phase 2</b><br><small>Hiring Migration</small></td>
+        <td>Migrate 20 hiring flows เข้า module architecture พร้อม UAT</td>
+        <td><b>3–4 สัปดาห์</b></td>
+        <td>Phase 1 + modules ready</td>
+        <td><span class="tag red">Impact สูง — Hiring flow ใช้งานจริง ต้องทำ parallel ก่อน cutover</span></td>
+      </tr>
+      <tr>
+        <td><b>Phase 3</b><br><small>Full Migration</small></td>
+        <td>Migrate Probation, Contract, NewJoiner, Resign, Referral + Full UAT</td>
+        <td><b>4–6 สัปดาห์</b></td>
+        <td>Phase 2 stable</td>
+        <td><span class="tag green">Lower risk — flows เล็กกว่า และ logic ง่ายกว่า</span></td>
+      </tr>
+      <tr>
+        <td colspan="2" style="font-weight:700;">รวมทั้งหมด (ทีม 1 คน ทำควบคู่งาน HR)</td>
+        <td><b>10–15 สัปดาห์</b><br><small>~3–4 เดือน</small></td>
+        <td>—</td>
+        <td><span class="tag blue">ถ้าทีม 2 คน: ลดได้ ~40%</span></td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+<div class="footer">
+  TA Flow Analysis Dashboard v1.0 | HRIS Revamp — Buzzebees | สร้างจากการวิเคราะห์ 55 flows โดยอัตโนมัติ | 2026-04-24
+</div>
+
+<script>
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  event.target.classList.add('active');
+}
+</script>
+</body>
+</html>
