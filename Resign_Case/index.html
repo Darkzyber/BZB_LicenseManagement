@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resign Workflow — Buzzebees HRIS</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #0d0f14;
+    --surface: #161920;
+    --border: #252932;
+    --border-bright: #353d4a;
+    --text: #e8eaf0;
+    --text-dim: #6b7280;
+    --text-muted: #9ca3af;
+
+    /* Resign flow */
+    --r-accent: #3b82f6;
+    --r-accent-glow: rgba(59,130,246,0.15);
+    --r-module: #8b5cf6;
+    --r-module-glow: rgba(139,92,246,0.12);
+    --r-warn: #f59e0b;
+    --r-success: #10b981;
+
+    /* Cancel flow */
+    --c-accent: #ef4444;
+    --c-accent-glow: rgba(239,68,68,0.15);
+    --c-module: #f97316;
+    --c-module-glow: rgba(249,115,22,0.12);
+
+    /* Shared */
+    --error: #ef4444;
+    --error-glow: rgba(239,68,68,0.1);
+    --gateway: #06b6d4;
+    --gateway-glow: rgba(6,182,212,0.12);
+
+    --node-r: 6px;
+    --font: 'IBM Plex Sans Thai', sans-serif;
+    --mono: 'IBM Plex Mono', monospace;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    min-height: 100vh;
+    padding: 40px 24px 80px;
+  }
+
+  /* ── Header ── */
+  .header {
+    text-align: center;
+    margin-bottom: 56px;
+  }
+  .header-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border-bright);
+    border-radius: 99px;
+    padding: 4px 14px 4px 10px;
+    font-size: 11px;
+    font-family: var(--mono);
+    color: var(--text-dim);
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  .header-badge span { width:6px;height:6px;border-radius:50%;background:var(--r-success);display:inline-block; }
+  h1 {
+    font-size: clamp(22px,4vw,36px);
+    font-weight: 600;
+    letter-spacing: -.02em;
+    color: var(--text);
+  }
+  .header-sub {
+    margin-top: 8px;
+    font-size: 13px;
+    color: var(--text-dim);
+    font-family: var(--mono);
+  }
+
+  /* ── Layout ── */
+  .flows {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+    max-width: 1300px;
+    margin: 0 auto;
+  }
+  @media (max-width: 900px) {
+    .flows { grid-template-columns: 1fr; }
+  }
+
+  /* ── Flow column ── */
+  .flow {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+  .flow-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 18px;
+    border-radius: var(--node-r) var(--node-r) 0 0;
+    border: 1px solid var(--border);
+    border-bottom: none;
+    font-size: 12px;
+    font-family: var(--mono);
+    font-weight: 500;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+  }
+  .flow-resign .flow-header { background: rgba(59,130,246,.08); color: var(--r-accent); border-color: rgba(59,130,246,.3); }
+  .flow-cancel .flow-header { background: rgba(239,68,68,.08); color: var(--c-accent); border-color: rgba(239,68,68,.3); }
+  .flow-header-dot { width:8px;height:8px;border-radius:50%; }
+  .flow-resign .flow-header-dot { background: var(--r-accent); }
+  .flow-cancel .flow-header-dot { background: var(--c-accent); }
+
+  .flow-body {
+    border: 1px solid var(--border);
+    border-radius: 0 0 var(--node-r) var(--node-r);
+    padding: 20px 16px 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+  }
+  .flow-resign .flow-body { border-color: rgba(59,130,246,.2); background: linear-gradient(180deg, rgba(59,130,246,.03) 0%, transparent 40%); }
+  .flow-cancel .flow-body { border-color: rgba(239,68,68,.2); background: linear-gradient(180deg, rgba(239,68,68,.03) 0%, transparent 40%); }
+
+  /* ── Nodes ── */
+  .node {
+    width: 100%;
+    border-radius: var(--node-r);
+    padding: 10px 14px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .node-num {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: .1em;
+    opacity: .6;
+  }
+  .node-label {
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.4;
+  }
+  .node-desc {
+    font-size: 11px;
+    color: var(--text-dim);
+    line-height: 1.5;
+    margin-top: 2px;
+  }
+
+  /* node variants */
+  .node-trigger {
+    background: var(--surface);
+    border: 1px solid var(--border-bright);
+    color: var(--text-muted);
+  }
+  .node-trigger .node-num { color: var(--text-dim); }
+
+  .node-action-r {
+    background: var(--r-accent-glow);
+    border: 1px solid rgba(59,130,246,.35);
+    color: var(--text);
+  }
+  .node-action-r .node-num { color: var(--r-accent); }
+
+  .node-action-c {
+    background: var(--c-accent-glow);
+    border: 1px solid rgba(239,68,68,.35);
+    color: var(--text);
+  }
+  .node-action-c .node-num { color: var(--c-accent); }
+
+  .node-module-r {
+    background: var(--r-module-glow);
+    border: 1px dashed rgba(139,92,246,.45);
+    color: var(--text);
+  }
+  .node-module-r .node-num { color: var(--r-module); }
+
+  .node-module-c {
+    background: var(--c-module-glow);
+    border: 1px dashed rgba(249,115,22,.45);
+    color: var(--text);
+  }
+  .node-module-c .node-num { color: var(--c-module); }
+
+  .node-gateway {
+    background: var(--gateway-glow);
+    border: 1px solid rgba(6,182,212,.4);
+    color: var(--text);
+  }
+  .node-gateway .node-num { color: var(--gateway); }
+
+  .node-error {
+    background: var(--error-glow);
+    border: 1px solid rgba(239,68,68,.35);
+    color: var(--text);
+  }
+  .node-error .node-num { color: var(--error); }
+
+  .node-notif {
+    background: rgba(16,185,129,.08);
+    border: 1px solid rgba(16,185,129,.3);
+    color: var(--text);
+  }
+  .node-notif .node-num { color: var(--r-success); }
+
+  /* sub-nodes indent */
+  .sub-nodes {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding-left: 20px;
+    position: relative;
+  }
+  .sub-nodes::before {
+    content:'';
+    position: absolute;
+    left: 8px; top: 0; bottom: 0;
+    width: 1px;
+    background: var(--border-bright);
+  }
+
+  /* decision diamond */
+  .decision-wrap {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .decision {
+    background: rgba(245,158,11,.08);
+    border: 1px solid rgba(245,158,11,.4);
+    border-radius: 4px;
+    padding: 10px 14px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--r-warn);
+    text-align: center;
+    width: 100%;
+    position: relative;
+  }
+  .decision::before {
+    content: '◆';
+    font-size: 10px;
+    margin-right: 6px;
+    opacity: .7;
+  }
+  .decision-branches {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    padding: 0 4px;
+  }
+  .branch {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    align-items: center;
+  }
+  .branch-label {
+    font-size: 10px;
+    font-family: var(--mono);
+    padding: 3px 8px;
+    border-radius: 99px;
+    margin-bottom: 6px;
+    font-weight: 500;
+    letter-spacing: .05em;
+  }
+  .branch-yes .branch-label { background: rgba(16,185,129,.12); color: var(--r-success); border: 1px solid rgba(16,185,129,.3); }
+  .branch-no .branch-label  { background: rgba(239,68,68,.1); color: var(--c-accent); border: 1px solid rgba(239,68,68,.25); }
+
+  /* arrows */
+  .arrow {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 3px 0;
+    color: var(--border-bright);
+    font-size: 11px;
+    line-height: 1;
+    user-select: none;
+  }
+  .arrow-line {
+    width: 1px;
+    height: 14px;
+    background: var(--border-bright);
+  }
+  .arrow-text {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--text-dim);
+    padding: 1px 6px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    margin: 2px 0;
+  }
+
+  /* chip tags */
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 5px;
+  }
+  .chip {
+    font-size: 10px;
+    font-family: var(--mono);
+    padding: 2px 7px;
+    border-radius: 3px;
+    font-weight: 500;
+  }
+  .chip-blue { background: rgba(59,130,246,.15); color: #93c5fd; border: 1px solid rgba(59,130,246,.25); }
+  .chip-purple { background: rgba(139,92,246,.15); color: #c4b5fd; border: 1px solid rgba(139,92,246,.25); }
+  .chip-green { background: rgba(16,185,129,.12); color: #6ee7b7; border: 1px solid rgba(16,185,129,.2); }
+  .chip-orange { background: rgba(249,115,22,.12); color: #fdba74; border: 1px solid rgba(249,115,22,.25); }
+  .chip-red { background: rgba(239,68,68,.12); color: #fca5a5; border: 1px solid rgba(239,68,68,.25); }
+  .chip-cyan { background: rgba(6,182,212,.12); color: #67e8f9; border: 1px solid rgba(6,182,212,.25); }
+
+  /* legend */
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 24px;
+    justify-content: center;
+    margin: 48px auto 0;
+    max-width: 800px;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    color: var(--text-dim);
+    font-family: var(--mono);
+  }
+  .legend-box {
+    width: 16px; height: 10px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-badge"><span></span>Buzzebees HRIS</div>
+  <h1>Resign Workflow</h1>
+  <p class="header-sub">Flow Design v1.0 · Power Automate · SharePoint</p>
+</div>
+
+<div class="flows">
+
+  <!-- ══════════════════════════════ RESIGN FLOW ══════════════════════════════ -->
+  <div class="flow flow-resign">
+    <div class="flow-header">
+      <span class="flow-header-dot"></span>
+      FLOW 01 — Resign
+    </div>
+    <div class="flow-body">
+
+      <!-- Pre-trigger -->
+      <div class="node node-trigger">
+        <span class="node-num">PRE-TRIGGER</span>
+        <span class="node-label">พนักงานแจ้ง HRBP (P'Gae)</span>
+        <span class="node-desc">ทักผ่านอีเมล / แชท → P'Gae คุยเสร็จแล้วส่ง Form Resign ให้กรอก</span>
+      </div>
+
+      <div class="arrow"><div class="arrow-line"></div>▼</div>
+
+      <!-- Step 1 -->
+      <div class="node node-action-r">
+        <span class="node-num">STEP 1</span>
+        <span class="node-label">พนักงานกรอก Form Resign</span>
+        <div class="chips">
+          <span class="chip chip-blue">Power Apps / Form</span>
+          <span class="chip chip-blue">Trigger Flow</span>
+        </div>
+      </div>
+
+      <div class="arrow"><div class="arrow-line"></div>▼</div>
+
+      <!-- Step 2 -->
+      <div class="node node-action-r">
+        <span class="node-num">STEP 2</span>
+        <span class="node-label">Upsert ข้อมูลลง SharePoint</span>
+        <span class="node-desc">บันทึกทุก field ที่พนักงานกรอก + สร้าง AutoIncrementResignNumber</span>
+        <div class="chips">
+          <span class="chip chip-blue">SharePoint List</span>
+          <span class="chip chip-purple">Upsert Item</span>
+        </div>
+      </div>
+
+      <div class="arrow"><div class="arrow-line"></div>▼</div>
+
+      <!-- Step 2.1 -->
+      <div class="sub-nodes">
+        <div class="node node-notif">
+          <span class="node-num">STEP 2.1 · NOTIFY EMPLOYEE</span>
+          <span class="node-label">แจ้งพนักงานว่าเปิดใบลาออกแล้ว</span>
+          <span class="node-desc">ส่ง email พร้อมเลข <strong>ResignNumber</strong> ให้พนักงาน</span>
+          <div class="chips">
+            <span class="chip chip-green">Send Email</span>
+            <span class="chip chip-blue">ResignNumber</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="arrow"><div class="arrow-line"></div>▼</div>
+
+      <!-- Step 3 -->
+      <div class="node node-module-r">
+        <span class="node-num">STEP 3 · MODULE</span>
+        <span class="node-label">แจ้ง Assets ที่พนักงานมี</span>
+        <div class="chips">
+          <span class="chip chip-purple">Assets IT Support</span>
+          <span class="chip chip-purple">บัตรประกัน</span>
+          <span class="chip chip-purple">กองทุนสำรองเลี้ยงชีพ (ยกเลิก/คงสภาพ)</span>
+        </div>
+      </div>
+
+      <div class="arrow"><div class="arrow-line"></div>▼</div>
+
+      <!-- Step 4 -->
+      <div class="node node-module-r">
+        <span class="node-num">STEP 4 · MODULE</span>
+        <span class="node-label">Approve Processing</span>
+        <span class="node-desc">ส่ง Approval ตามสายการอนุมัติที่กำหนด</span>
+        <div class="chips">
+          <span class="chip chip-purple">Approval Action</span>
+        </div>
+      </div>
+
+      <div class="arrow"><div class="arrow-line"></div>▼</div>
+
+      <!-- Step 5 -->
+      <div class="node node-notif">
+        <span class="node-num">STEP 5</span>
+        <span class="node-label">แจ้ง HR ว่าพนักงานจะลาออกวันที่ ...</span>
+        <div class="chips">
+          <span class="chip chip-green">Notify HR Group</span>
+        </div>
+      </div>
+
+      <div class="arrow"><div class="arrow-line"></div>▼</div>
+
+      <!-- Step 5.1 -->
+      <div class="sub-nodes">
+        <div class="node node-notif">
+          <span class="node-num">STEP 5.1</span>
+          <span class="node-label">ส่งใบยืนยันการลาออก → Mail HR Group</span>
+          <div class="chips">
+            <span class="chip chip-green">Send Mail</span>
+            <span class="chip chip-blue">HR Mail Group</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="arrow"><div class="arrow-line"></div>▼</div>
+
+      <!-- Step 6 -->
+      <div class="node node-gateway">
+        <span class="node-num">STEP 6 · MODULE · GATEWAY RTC</span>
+        <span class="node-label">ส่งต่อทีมที่เกี่ยวข้องเพื่อ Process ต่อ</span>
+        <span class="node-desc">Route to related teams via Gateway RTC</span>
+        <div class="chips">
+          <span class="chip chip-cyan">Gateway RTC</span>
+          <span class="chip chip-cyan">Child Flow / HTTP</span>
+        </div>
+      </div>
+
+      <div class="arrow"><div class="arrow-line"></div>▼</div>
+
+      <!-- Step 7 -->
+      <div class="node node-error">
+        <span class="node-num">STEP 7 · ERROR HANDLER</span>
+        <span class="node-label">Ticket Error → แจ้ง HRIS</span>
+        <span class="node-desc">ถ้า flow error ให้สร้าง ticket แจ้ง HRIS Officer โดยอัตโนมัติ</span>
+        <div class="chips">
+          <span class="chip chip-red">runAfter: Failed</span>
+          <span class="chip chip-red">Notify HRIS</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════ CANCEL FLOW ══════════════════════════════ -->
+  <div class="flow flow-cancel">
+    <div class="flow-header">
+      <span class="flow-header-dot"></span>
+      FLOW 02 — Cancel Resign
+    </div>
+    <div class="flow-body">
+
+      <!-- Pre-trigger -->
+      <div class="node node-trigger">
+        <span class="node-num">PRE-TRIGGER</span>
+        <span class="node-label">พนักงานแจ้ง P'Gae ขอยกเลิกใบลาออก</span>
+        <span class="node-desc">P'Gae เป็นผู้กรอก Form Cancel ให้แทน</span>
+      </div>
+
+      <div class="arrow"><div class="arrow-line"></div>▼</div>
+
+      <!-- Step 1 -->
+      <div class="node node-action-c">
+        <span class="node-num">STEP 1</span>
+        <span class="node-label">กรอก Form Cancel Resign</span>
+        <div class="chips">
+          <span class="chip chip-red">Power Apps / Form</span>
+          <span class="chip chip-red">Trigger Flow</span>
+        </div>
+      </div>
+
+      <div class="arrow"><div class="arrow-line"></div>▼</div>
+
+      <!-- Step 2 -->
+      <div class="node node-action-c">
+        <span class="node-num">STEP 2</span>
+        <span class="node-label">ตรวจสอบ ResignNumber ใน SharePoint</span>
+        <span class="node-desc">ค้นหาใบงานด้วย AutoIncrementResignNumber</span>
+        <div class="chips">
+          <span class="chip chip-red">Get Item</span>
+          <span class="chip chip-red">SharePoint</span>
+        </div>
+      </div>
+
+      <div class="arrow"><div class="arrow-line"></div>▼</div>
+
+      <!-- Decision: found? -->
+      <div class="decision-wrap">
+        <div class="decision">พบใบงานหรือไม่?</div>
+        <div class="arrow"><div class="arrow-line"></div></div>
+        <div class="decision-branches">
+          <div class="branch branch-no">
+            <span class="branch-label">ไม่พบ</span>
+            <div class="node node-error" style="width:100%">
+              <span class="node-num">ERROR</span>
+              <span class="node-label">แจ้งว่าไม่พบใบงาน</span>
+              <span class="node-desc">ส่งกลับ P'Gae</span>
+            </div>
+          </div>
+          <div class="branch branch-yes">
+            <span class="branch-label">พบ</span>
+            <div class="decision" style="font-size:11px">วันเหลือ &lt; 3 วัน?</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="arrow">
+        <div class="arrow-line"></div>
+        <span class="arrow-text">ยกเลิก / เลื่อนได้ ปกติ หรือ C-level สั่งให้อยู่ต่อ</span>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="node node-action-c">
+        <span class="node-num">STEP 3</span>
+        <span class="node-label">FlowAdmin สั่ง CancelFlow → หยุด FlowResign</span>
+        <span class="node-desc">ยกเลิกการทำงาน Resign Flow ที่กำลังดำเนินอยู่</span>
+        <div class="chips">
+          <span class="chip chip-red">Cancel Flow Run</span>
+          <span class="chip chip-orange">FlowAdmin</span>
+        </div>
+      </div>
+
+      <div class="arrow"><div class="arrow-line"></div>▼</div>
+
+      <!-- Step 4 -->
+      <div class="node node-gateway">
+        <span class="node-num">STEP 4 · MODULE · GATEWAY RTC</span>
+        <span class="node-label">แจ้ง IT Support ว่าใบ Resign ยกเลิก</span>
+        <span class="node-desc">ส่งสัญญาณไปทีมที่เกี่ยวข้อง — ยกเลิกกระบวนการคืนอุปกรณ์ / account</span>
+        <div class="chips">
+          <span class="chip chip-cyan">Gateway RTC</span>
+          <span class="chip chip-cyan">IT Support</span>
+        </div>
+      </div>
+
+      <div class="arrow"><div class="arrow-line"></div>▼</div>
+
+      <!-- Step 5 -->
+      <div class="node node-notif">
+        <span class="node-num">STEP 5</span>
+        <span class="node-label">Notification → [คนเข้า-คนออก]</span>
+        <span class="node-desc">แจ้งช่องที่รับผิดชอบเรื่องการเปลี่ยนแปลงพนักงาน</span>
+        <div class="chips">
+          <span class="chip chip-green">Notify Channel</span>
+          <span class="chip chip-green">คนเข้า-คนออก</span>
+        </div>
+      </div>
+
+      <div class="arrow"><div class="arrow-line"></div>▼</div>
+
+      <!-- Step 6 -->
+      <div class="node node-error">
+        <span class="node-num">STEP 6 · ERROR HANDLER</span>
+        <span class="node-label">Ticket Error → แจ้ง HRIS</span>
+        <span class="node-desc">ถ้า flow error ให้สร้าง ticket แจ้ง HRIS Officer โดยอัตโนมัติ</span>
+        <div class="chips">
+          <span class="chip chip-red">runAfter: Failed</span>
+          <span class="chip chip-red">Notify HRIS</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- Legend -->
+<div class="legend">
+  <div class="legend-item">
+    <div class="legend-box" style="background:rgba(59,130,246,.2);border:1px solid rgba(59,130,246,.35)"></div>
+    Action Step (Resign)
+  </div>
+  <div class="legend-item">
+    <div class="legend-box" style="background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.35)"></div>
+    Action Step (Cancel)
+  </div>
+  <div class="legend-item">
+    <div class="legend-box" style="background:rgba(139,92,246,.12);border:1px dashed rgba(139,92,246,.45)"></div>
+    Module (Resign)
+  </div>
+  <div class="legend-item">
+    <div class="legend-box" style="background:rgba(249,115,22,.12);border:1px dashed rgba(249,115,22,.45)"></div>
+    Module (Cancel)
+  </div>
+  <div class="legend-item">
+    <div class="legend-box" style="background:rgba(6,182,212,.12);border:1px solid rgba(6,182,212,.4)"></div>
+    Gateway RTC
+  </div>
+  <div class="legend-item">
+    <div class="legend-box" style="background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.3)"></div>
+    Notification
+  </div>
+  <div class="legend-item">
+    <div class="legend-box" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.35)"></div>
+    Error Handler
+  </div>
+  <div class="legend-item">
+    <div class="legend-box" style="background:var(--surface);border:1px solid var(--border-bright)"></div>
+    Pre-Trigger
+  </div>
+</div>
+
+</body>
+</html>
