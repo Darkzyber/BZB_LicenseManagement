@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Create Account Module — Design Doc</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0c10;
+  --s1: #111318;
+  --s2: #181c24;
+  --s3: #1e2330;
+  --border: #252b3b;
+  --border2: #2e3650;
+  --blue: #4f8ef7;
+  --blue2: #7eb3ff;
+  --cyan: #22d3ee;
+  --green: #4ade80;
+  --yellow: #fbbf24;
+  --red: #f87171;
+  --purple: #c084fc;
+  --orange: #fb923c;
+  --text: #dde3f0;
+  --muted: #5a6480;
+  --muted2: #8892aa;
+  --mono: 'JetBrains Mono', monospace;
+  --sans: 'Noto Sans Thai', sans-serif;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+body { background:var(--bg); color:var(--text); font-family:var(--sans); font-size:14px; line-height:1.7; }
+
+/* LAYOUT */
+.container { display:grid; grid-template-columns:220px 1fr; min-height:100vh; }
+
+/* SIDEBAR */
+aside {
+  background:var(--s1); border-right:1px solid var(--border);
+  padding:24px 0; position:sticky; top:0; height:100vh; overflow-y:auto;
+}
+.aside-logo {
+  padding:0 20px 20px; border-bottom:1px solid var(--border); margin-bottom:16px;
+}
+.aside-logo .tag { font-family:var(--mono); font-size:9px; color:var(--muted); letter-spacing:.15em; text-transform:uppercase; }
+.aside-logo .name { font-size:13px; font-weight:600; color:var(--blue2); margin-top:4px; }
+.aside-logo .ver { font-family:var(--mono); font-size:9px; color:var(--muted); margin-top:2px; }
+
+.nav-group { margin-bottom:4px; }
+.nav-group-title {
+  font-family:var(--mono); font-size:9px; color:var(--muted); letter-spacing:.12em;
+  text-transform:uppercase; padding:6px 20px 4px;
+}
+.nav-link {
+  display:flex; align-items:center; gap:8px; padding:6px 20px;
+  font-size:12px; color:var(--muted2); text-decoration:none;
+  transition:.15s; border-left:2px solid transparent;
+}
+.nav-link:hover { color:var(--text); background:var(--s2); }
+.nav-link.active { color:var(--blue2); border-left-color:var(--blue); background:rgba(79,142,247,.06); }
+.nav-dot { width:5px; height:5px; border-radius:50%; background:currentColor; flex-shrink:0; }
+
+/* MAIN */
+main { padding:48px 56px; max-width:960px; }
+
+/* SECTIONS */
+section { margin-bottom:64px; scroll-margin-top:32px; }
+.sec-label {
+  font-family:var(--mono); font-size:9px; color:var(--muted); letter-spacing:.2em;
+  text-transform:uppercase; margin-bottom:8px;
+}
+h2 { font-size:22px; font-weight:700; margin-bottom:4px; letter-spacing:-.02em; }
+h2 span { color:var(--blue); }
+.sec-desc { font-size:13px; color:var(--muted2); margin-bottom:28px; line-height:1.6; }
+
+/* FLOW DIAGRAM */
+.flow-wrap { display:flex; flex-direction:column; gap:0; }
+.flow-node {
+  display:flex; align-items:flex-start; gap:14px; position:relative;
+}
+.flow-node::before {
+  content:''; position:absolute; left:15px; top:32px; bottom:-1px;
+  width:1px; background:var(--border); z-index:0;
+}
+.flow-node:last-child::before { display:none; }
+.flow-icon {
+  width:32px; height:32px; border-radius:8px; display:flex; align-items:center;
+  justify-content:center; font-size:14px; flex-shrink:0; z-index:1; position:relative;
+}
+.flow-body { padding-bottom:20px; flex:1; }
+.flow-title { font-size:13px; font-weight:600; margin-bottom:2px; }
+.flow-sub { font-size:11px; color:var(--muted2); font-family:var(--mono); }
+.flow-detail { font-size:12px; color:var(--muted2); margin-top:6px; line-height:1.6; }
+
+.fi-trigger { background:rgba(79,142,247,.15); color:var(--blue); }
+.fi-action  { background:rgba(34,211,238,.1); color:var(--cyan); }
+.fi-cond    { background:rgba(251,191,36,.1); color:var(--yellow); }
+.fi-success { background:rgba(74,222,128,.1); color:var(--green); }
+.fi-error   { background:rgba(248,113,113,.1); color:var(--red); }
+.fi-write   { background:rgba(192,132,252,.1); color:var(--purple); }
+
+/* BRANCH */
+.branch-wrap {
+  margin:8px 0 8px 46px; display:grid; grid-template-columns:1fr 1fr; gap:12px;
+}
+.branch {
+  border:1px solid var(--border); border-radius:10px; padding:14px 16px;
+  background:var(--s2);
+}
+.branch-head {
+  font-family:var(--mono); font-size:9px; font-weight:700; letter-spacing:.1em;
+  text-transform:uppercase; margin-bottom:8px; display:flex; align-items:center; gap:6px;
+}
+.branch-head.yes { color:var(--green); }
+.branch-head.no  { color:var(--red); }
+.branch-head.case1 { color:var(--blue); }
+.branch-head.case2 { color:var(--cyan); }
+.branch-head.case3 { color:var(--purple); }
+.branch-item { font-size:11px; color:var(--muted2); padding:2px 0; display:flex; gap:6px; }
+.branch-item::before { content:'→'; color:var(--muted); flex-shrink:0; }
+
+/* 3-col branch */
+.branch-3 { grid-template-columns:1fr 1fr 1fr; }
+
+/* CODE BLOCK */
+.code-block {
+  background:var(--s2); border:1px solid var(--border); border-radius:10px;
+  overflow:hidden; margin:16px 0;
+}
+.code-header {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:8px 16px; background:var(--s3); border-bottom:1px solid var(--border);
+}
+.code-lang { font-family:var(--mono); font-size:9px; color:var(--muted); letter-spacing:.1em; text-transform:uppercase; }
+.code-label { font-family:var(--mono); font-size:10px; color:var(--muted2); }
+.code-body { padding:16px 20px; overflow-x:auto; }
+.code-body pre { font-family:var(--mono); font-size:12px; line-height:1.8; color:var(--text); }
+.k { color:var(--blue); }
+.s { color:var(--green); }
+.c { color:var(--muted); }
+.v { color:var(--orange); }
+.f { color:var(--cyan); }
+.n { color:var(--purple); }
+
+/* TABLE */
+.doc-table { width:100%; border-collapse:collapse; margin:16px 0; font-size:12px; }
+.doc-table th {
+  text-align:left; padding:8px 14px; background:var(--s2);
+  font-family:var(--mono); font-size:9px; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--muted); border-bottom:1px solid var(--border);
+}
+.doc-table td { padding:9px 14px; border-bottom:1px solid var(--border); color:var(--muted2); vertical-align:top; }
+.doc-table tr:last-child td { border-bottom:none; }
+.doc-table td:first-child { font-family:var(--mono); font-size:11px; color:var(--text); }
+.doc-table tr:hover td { background:var(--s2); }
+
+/* BADGE */
+.badge {
+  display:inline-flex; align-items:center; gap:4px;
+  padding:2px 8px; border-radius:10px; font-size:10px; font-family:var(--mono); font-weight:500;
+}
+.b-new  { background:rgba(79,142,247,.12); color:var(--blue2); }
+.b-keep { background:rgba(74,222,128,.1); color:var(--green); }
+.b-mod  { background:rgba(251,191,36,.1); color:var(--yellow); }
+.b-del  { background:rgba(248,113,113,.1); color:var(--red); }
+
+/* CALLOUT */
+.callout {
+  border-left:3px solid; border-radius:0 8px 8px 0;
+  padding:12px 16px; margin:14px 0; font-size:12px; line-height:1.7;
+}
+.callout.info  { border-color:var(--blue); background:rgba(79,142,247,.06); color:var(--blue2); }
+.callout.warn  { border-color:var(--yellow); background:rgba(251,191,36,.06); color:var(--yellow); }
+.callout.ok    { border-color:var(--green); background:rgba(74,222,128,.06); color:var(--green); }
+.callout.tip   { border-color:var(--purple); background:rgba(192,132,252,.06); color:var(--purple); }
+.callout strong { font-weight:600; }
+
+/* UPN DEMO */
+.upn-demo {
+  background:var(--s2); border:1px solid var(--border); border-radius:10px; padding:20px;
+  margin:16px 0;
+}
+.upn-row { display:flex; align-items:center; gap:10px; margin-bottom:10px; flex-wrap:wrap; }
+.upn-row:last-child { margin-bottom:0; }
+.upn-label { font-size:11px; color:var(--muted); width:80px; flex-shrink:0; }
+.upn-iter {
+  display:flex; gap:6px; flex-wrap:wrap;
+}
+.iter-chip {
+  font-family:var(--mono); font-size:11px; padding:3px 10px; border-radius:6px;
+  border:1px solid var(--border); color:var(--muted2);
+}
+.iter-chip.taken { border-color:var(--red); color:var(--red); text-decoration:line-through; opacity:.6; }
+.iter-chip.win   { border-color:var(--green); color:var(--green); background:rgba(74,222,128,.08); }
+
+/* SP COLUMNS */
+.col-grid { display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; margin:16px 0; }
+.col-card {
+  background:var(--s2); border:1px solid var(--border); border-radius:8px; padding:12px 14px;
+}
+.col-name { font-family:var(--mono); font-size:11px; color:var(--text); margin-bottom:4px; }
+.col-src  { font-size:10px; color:var(--muted); }
+
+/* DIVIDER */
+hr { border:none; border-top:1px solid var(--border); margin:32px 0; }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<!-- SIDEBAR -->
+<aside>
+  <div class="aside-logo">
+    <div class="tag">bzb // hris</div>
+    <div class="name">Create Account Module</div>
+    <div class="ver">design doc v2.0 — reusable</div>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-title">Overview</div>
+    <a href="#overview" class="nav-link active"><span class="nav-dot"></span>Architecture</a>
+    <a href="#payload" class="nav-link"><span class="nav-dot"></span>HTTP Payload</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-title">Flow Steps</div>
+    <a href="#step1" class="nav-link"><span class="nav-dot"></span>1. Get Employee</a>
+    <a href="#step2" class="nav-link"><span class="nav-dot"></span>2. Generate UPN</a>
+    <a href="#step3" class="nav-link"><span class="nav-dot"></span>3. Dedup Check</a>
+    <a href="#step4" class="nav-link"><span class="nav-dot"></span>4. Create Account</a>
+    <a href="#step5" class="nav-link"><span class="nav-dot"></span>5. Case Branch</a>
+    <a href="#step6" class="nav-link"><span class="nav-dot"></span>6. Write SP Log</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-title">Reference</div>
+    <a href="#upn-algo" class="nav-link"><span class="nav-dot"></span>UPN Algorithm</a>
+    <a href="#sp-columns" class="nav-link"><span class="nav-dot"></span>SP Entra Log</a>
+    <a href="#changes" class="nav-link"><span class="nav-dot"></span>What Changes</a>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main>
+
+<!-- OVERVIEW -->
+<section id="overview">
+  <div class="sec-label">// 01 architecture</div>
+  <h2>Reusable <span>Create Account</span> Module</h2>
+  <p class="sec-desc">
+    เปลี่ยน flow เดิมจาก trigger "When SP item created" → <strong>When HTTP request received</strong>
+    เพื่อให้ caller flow 3 กรณีเรียกใช้ module เดียวกันได้ โดย logic แกนกลางไม่เปลี่ยน
+  </p>
+
+  <!-- CALLER DIAGRAM -->
+  <div style="background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:24px;">
+    <div style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;margin-bottom:16px;">CALLER → MODULE</div>
+    <div style="display:grid;grid-template-columns:1fr 40px 1fr;align-items:center;gap:0;">
+      <!-- CALLERS -->
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div style="border:1px solid var(--blue);border-radius:8px;padding:10px 14px;background:rgba(79,142,247,.06);">
+          <div style="font-size:11px;font-weight:600;color:var(--blue2);">🧑‍💼 New Hire Flow</div>
+          <div style="font-size:10px;color:var(--muted);font-family:var(--mono);margin-top:2px;">trigger: SP item created</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px;">caseType: <span style="color:var(--blue)">newHire</span></div>
+        </div>
+        <div style="border:1px solid var(--cyan);border-radius:8px;padding:10px 14px;background:rgba(34,211,238,.04);">
+          <div style="font-size:11px;font-weight:600;color:var(--cyan);">📦 License Request Flow</div>
+          <div style="font-size:10px;color:var(--muted);font-family:var(--mono);margin-top:2px;">trigger: approval approved</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px;">caseType: <span style="color:var(--cyan)">centralMail</span></div>
+        </div>
+        <div style="border:1px solid var(--purple);border-radius:8px;padding:10px 14px;background:rgba(192,132,252,.04);">
+          <div style="font-size:11px;font-weight:600;color:var(--purple);">🛡️ SP Admin Request Flow</div>
+          <div style="font-size:10px;color:var(--muted);font-family:var(--mono);margin-top:2px;">trigger: approval approved</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px;">caseType: <span style="color:var(--purple)">adminSP</span></div>
+        </div>
+      </div>
+      <!-- ARROW -->
+      <div style="text-align:center;font-size:18px;color:var(--muted);">→</div>
+      <!-- MODULE -->
+      <div style="border:1px solid var(--green);border-radius:12px;padding:20px;background:rgba(74,222,128,.04);height:100%;display:flex;flex-direction:column;justify-content:center;">
+        <div style="font-family:var(--mono);font-size:9px;color:var(--green);letter-spacing:.1em;margin-bottom:8px;">CHILD FLOW (MODULE)</div>
+        <div style="font-size:14px;font-weight:700;margin-bottom:10px;">HRIS Create Account</div>
+        <div style="font-size:11px;color:var(--muted2);line-height:1.8;">
+          ⚡ HTTP trigger<br>
+          👤 Get Employee<br>
+          🔤 Generate UPN<br>
+          🔍 Dedup check (SP)<br>
+          ✅ Create via Graph API<br>
+          🌿 Case branch<br>
+          📝 Write SP Entra Log<br>
+          📤 Return result
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout info">
+    <strong>Why child flow?</strong> — logic generate UPN + dedup + create account เหมือนกัน 100% ทั้ง 3 กรณี ต่างกันแค่ UPN format และ post-create action ดังนั้นแยกเป็น child flow ดีกว่า copy flow 3 ชุด
+  </div>
+</section>
+
+<!-- PAYLOAD -->
+<section id="payload">
+  <div class="sec-label">// 02 http payload</div>
+  <h2>HTTP <span>Payload Schema</span></h2>
+  <p class="sec-desc">Caller ทุก flow ต้อง POST body นี้มาให้ module</p>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-lang">json</span>
+      <span class="code-label">Request Body</span>
+    </div>
+    <div class="code-body"><pre>{
+  <span class="k">"caseType"</span>: <span class="s">"newHire"</span> | <span class="s">"centralMail"</span> | <span class="s">"adminSP"</span>,
+  <span class="k">"spItemId"</span>: <span class="v">548</span>,           <span class="c">// SharePoint row ID ของ employee</span>
+  <span class="k">"requestedBy"</span>: <span class="s">"email@buzzebees.com"</span>  <span class="c">// UPN ของคนขอ (audit)</span>
+}</pre></div>
+  </div>
+
+  <table class="doc-table">
+    <thead><tr><th>Field</th><th>Type</th><th>ค่าที่รับ</th><th>หมายเหตุ</th></tr></thead>
+    <tbody>
+      <tr><td>caseType</td><td>string</td><td>newHire / centralMail / adminSP</td><td>กำหนด UPN format และ post-create action</td></tr>
+      <tr><td>spItemId</td><td>integer</td><td>SP list row ID</td><td>ใช้ Get Item ดึง employee details</td></tr>
+      <tr><td>requestedBy</td><td>string</td><td>UPN</td><td>บันทึกลง SP Entra Log ช่อง RequestedBy</td></tr>
+    </tbody>
+  </table>
+
+  <p style="font-size:12px;color:var(--muted2);margin-top:8px;">
+    ผลลัพธ์ที่ module return กลับ:
+  </p>
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-lang">json</span>
+      <span class="code-label">Response Body</span>
+    </div>
+    <div class="code-body"><pre>{
+  <span class="k">"status"</span>: <span class="s">"success"</span> | <span class="s">"conflict"</span> | <span class="s">"error"</span>,
+  <span class="k">"upn"</span>: <span class="s">"first_name.so@buzzebees.com"</span>,
+  <span class="k">"objectId"</span>: <span class="s">"b4c95920-8b6a-..."</span>,
+  <span class="k">"displayName"</span>: <span class="s">"Somchai Somrak (Chai)"</span>,
+  <span class="k">"message"</span>: <span class="s">"UPN already exists"</span>   <span class="c">// เฉพาะ conflict/error</span>
+}</pre></div>
+  </div>
+</section>
+
+<hr>
+
+<!-- STEP 1 -->
+<section id="step1">
+  <div class="sec-label">// step 01</div>
+  <h2>Get <span>Employee Details</span></h2>
+  <p class="sec-desc">ดึงข้อมูลพนักงานจาก SharePoint ด้วย spItemId ที่รับมา — เหมือนเดิม</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-lang">expression</span><span class="code-label">Get Item → Build DisplayName</span></div>
+    <div class="code-body"><pre><span class="c">// ดึง item</span>
+<span class="f">Get item</span> → SP List: HR Employee → ID: <span class="f">triggerBody()?['spItemId']</span>
+
+<span class="c">// Build DisplayName (เหมือนเดิม — มี/ไม่มี Nickname)</span>
+<span class="k">if</span> length(NickName) > 0:
+  <span class="s">"Firstname Lastname (Nick)"</span>
+<span class="k">else</span>:
+  <span class="s">"Firstname Lastname"</span>
+
+<span class="c">// Initialize variables</span>
+Counter     = <span class="v">1</span>
+mail        = <span class="s">""</span>
+displayName = <span class="s">""</span></pre></div>
+  </div>
+</section>
+
+<!-- STEP 2 -->
+<section id="step2">
+  <div class="sec-label">// step 02</div>
+  <h2>Generate <span>UPN</span></h2>
+  <p class="sec-desc">แยก format ตาม caseType — ใช้ Switch action</p>
+
+  <div class="branch-wrap" style="margin-left:0;" >
+    <div class="branch">
+      <div class="branch-head case1">🧑‍💼 newHire</div>
+      <div style="font-family:var(--mono);font-size:11px;color:var(--cyan);margin-bottom:6px;">first_name.XX@buzzebees.com</div>
+      <div class="branch-item">substring lastname 2 ตัว</div>
+      <div class="branch-item">loop เพิ่มทีละตัวถ้าซ้ำ</div>
+    </div>
+    <div class="branch">
+      <div class="branch-head case2">📦 centralMail / adminSP</div>
+      <div style="font-family:var(--mono);font-size:11px;color:var(--cyan);margin-bottom:6px;">first_name.XXXX@buzzebees.com</div>
+      <div class="branch-item">substring lastname 4 ตัว</div>
+      <div class="branch-item">loop เพิ่มทีละตัวถ้าซ้ำ</div>
+    </div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-lang">expression</span><span class="code-label">Set variable: mail</span></div>
+    <div class="code-body"><pre><span class="c">// newHire — เริ่มที่ 2 ตัว</span>
+<span class="f">concat</span>(
+  <span class="f">toLower</span>(<span class="f">replace</span>(FirstName, <span class="s">' '</span>, <span class="s">'_'</span>)),
+  <span class="s">'.'</span>,
+  <span class="f">substring</span>(<span class="f">toLower</span>(LastName), <span class="v">0</span>, <span class="f">add</span>(variables(<span class="s">'Counter'</span>), <span class="v">1</span>)),
+  <span class="s">'@buzzebees.com'</span>
+)
+<span class="c">// Counter=1 → 2 ตัว, Counter=2 → 3 ตัว, ...</span>
+
+<span class="c">// centralMail / adminSP — เริ่มที่ 4 ตัว</span>
+<span class="f">concat</span>(
+  <span class="f">toLower</span>(<span class="f">replace</span>(FirstName, <span class="s">' '</span>, <span class="s">'_'</span>)),
+  <span class="s">'.'</span>,
+  <span class="f">substring</span>(<span class="f">toLower</span>(LastName), <span class="v">0</span>, <span class="f">add</span>(variables(<span class="s">'Counter'</span>), <span class="v">3</span>)),
+  <span class="s">'@buzzebees.com'</span>
+)
+<span class="c">// Counter=1 → 4 ตัว, Counter=2 → 5 ตัว, ...</span></pre></div>
+  </div>
+
+  <div class="callout warn">
+    <strong>Edge case:</strong> ถ้า lastname สั้นกว่า 2 ตัว (หรือ 4 ตัวสำหรับ central) ให้ fallback ใช้ lastname เต็ม + running number ต่อท้าย เช่น <code>first_name.lee1@buzzebees.com</code>
+  </div>
+</section>
+
+<!-- STEP 3 -->
+<section id="step3">
+  <div class="sec-label">// step 03</div>
+  <h2>Dedup <span>Check</span></h2>
+  <p class="sec-desc">เช็คซ้ำกับ SP Entra Log ก่อน — ไม่ต้อง call Graph API ทุกรอบ loop</p>
+
+  <div class="flow-wrap">
+    <div class="flow-node">
+      <div class="flow-icon fi-action">🔍</div>
+      <div class="flow-body">
+        <div class="flow-title">SP Entra Log: Get Items</div>
+        <div class="flow-sub">filter: UserPrincipalName eq '@{variables('mail')}'</div>
+        <div class="flow-detail">query ตรงๆ ไม่ต้อง loop ทั้งหมด — ถ้า return มา value ว่าง = ไม่ซ้ำ</div>
+      </div>
+    </div>
+    <div class="flow-node">
+      <div class="flow-icon fi-cond">?</div>
+      <div class="flow-body">
+        <div class="flow-title">Condition: empty(body('Get_SP_Entra')?['value'])</div>
+        <div class="flow-sub">ตรวจว่ามี UPN นี้อยู่ใน log แล้วหรือยัง</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="branch-wrap">
+    <div class="branch">
+      <div class="branch-head yes">✓ ไม่ซ้ำ (empty = true)</div>
+      <div class="branch-item">ออกจาก loop</div>
+      <div class="branch-item">ไปสร้าง account</div>
+    </div>
+    <div class="branch">
+      <div class="branch-head no">✕ ซ้ำ (empty = false)</div>
+      <div class="branch-item">Increment Counter</div>
+      <div class="branch-item">Set variable mail ใหม่</div>
+      <div class="branch-item">วน loop ต่อ</div>
+    </div>
+  </div>
+
+  <div class="callout tip">
+    <strong>ทำไมเช็ค SP ไม่ใช่ Graph?</strong> — SP Entra Log เก็บทั้ง active + disabled + deleted ถ้าเช็คแค่ Graph จะไม่เห็น account ที่ถูก delete ไปแล้ว แต่ UPN นั้นเคยถูกใช้ → อาจเกิด conflict ใน Azure AD cache ได้
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-lang">expression</span><span class="code-label">Loop terminate condition</span></div>
+    <div class="code-body"><pre><span class="c">// Do Until — ออกเมื่อหา UPN ว่างได้</span>
+<span class="f">Do Until</span>:
+  <span class="f">empty</span>(outputs(<span class="s">'Get_SP_Entra'</span>)?[<span class="s">'body/value'</span>]) <span class="k">is equal to</span> <span class="v">true</span>
+  <span class="k">OR</span> variables(<span class="s">'Counter'</span>) <span class="k">greater than</span> <span class="f">length</span>(toLower(LastName))
+
+<span class="c">// ถ้า Counter เกินความยาว lastname = หมด option → error</span></pre></div>
+  </div>
+</section>
+
+<!-- STEP 4 -->
+<section id="step4">
+  <div class="sec-label">// step 04</div>
+  <h2>Create <span>Account</span></h2>
+  <p class="sec-desc">เรียก Graph API สร้าง user ใน Entra ID</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-lang">http</span><span class="code-label">POST /v1.0/users</span></div>
+    <div class="code-body"><pre>POST https://graph.microsoft.com/v1.0/users
+
+{
+  <span class="k">"accountEnabled"</span>: <span class="v">true</span>,
+  <span class="k">"displayName"</span>: <span class="s">"@{variables('displayName')}"</span>,
+  <span class="k">"mailNickname"</span>: <span class="s">"@{first(split(variables('mail'), '@'))}"</span>,
+  <span class="k">"userPrincipalName"</span>: <span class="s">"@{variables('mail')}"</span>,
+  <span class="k">"department"</span>: <span class="s">"@{outputs('Get_item')?['body/Department/Value']}"</span>,
+  <span class="k">"employeeId"</span>: <span class="s">"@{outputs('Get_item')?['body/EntraEmployeeID']}"</span>,
+  <span class="k">"passwordProfile"</span>: {
+    <span class="k">"forceChangePasswordNextSignIn"</span>: <span class="v">true</span>,
+    <span class="k">"password"</span>: <span class="s">"Bzb@{formatDateTime(utcNow(),'yyyyMMdd')}!"</span>
+  },
+  <span class="k">"usageLocation"</span>: <span class="s">"TH"</span>
+}</pre></div>
+  </div>
+
+  <div class="callout warn">
+    <strong>Password temp:</strong> format <code>Bzb@yyyyMMdd!</code> ตรงตาม complexity policy (uppercase + lowercase + number + symbol) — user ต้องเปลี่ยนตอน login ครั้งแรก
+  </div>
+</section>
+
+<!-- STEP 5 -->
+<section id="step5">
+  <div class="sec-label">// step 05</div>
+  <h2>Case <span>Branch</span></h2>
+  <p class="sec-desc">หลัง create account สำเร็จ แยก action ตาม caseType</p>
+
+  <div class="branch-wrap branch-3">
+    <div class="branch">
+      <div class="branch-head case1">🧑‍💼 newHire</div>
+      <div class="branch-item">Add to mail group (ตาม Department matrix)</div>
+      <div class="branch-item">ส่ง Teams noti พร้อม account info</div>
+      <div class="branch-item">ส่ง email ต้อนรับ + temp password</div>
+    </div>
+    <div class="branch">
+      <div class="branch-head case2">📦 centralMail</div>
+      <div class="branch-item">ไม่ add mail group</div>
+      <div class="branch-item">ส่ง Teams noti ให้ HRIS</div>
+      <div class="branch-item">ส่ง email ให้ requester พร้อม UPN</div>
+    </div>
+    <div class="branch">
+      <div class="branch-head case3">🛡️ adminSP</div>
+      <div class="branch-item">Add to SP Admin security group</div>
+      <div class="branch-item">ส่ง Teams noti ให้ HRIS</div>
+      <div class="branch-item">ส่ง email ให้ requester พร้อม UPN</div>
+    </div>
+  </div>
+
+  <div class="callout info">
+    <strong>Switch action ใน Power Automate:</strong> ใช้ <code>Switch</code> บน <code>triggerBody()?['caseType']</code> แทน nested If ซ้อนกัน — อ่านง่ายกว่ามาก
+  </div>
+</section>
+
+<!-- STEP 6 -->
+<section id="step6">
+  <div class="sec-label">// step 06</div>
+  <h2>Write <span>SP Entra Log</span></h2>
+  <p class="sec-desc">บันทึกทุก column ลง SharePoint Entra Log ทันทีหลัง create สำเร็จ</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-lang">expression</span><span class="code-label">Create item — SP Entra Log</span></div>
+    <div class="code-body"><pre>EntraEmployeeID       = <span class="f">outputs('Get_item')?['body/EntraEmployeeID']</span>
+ObjectID              = <span class="f">body('Create_user')?['id']</span>
+UserPrincipalName     = <span class="f">variables('mail')</span>
+DisplayName           = <span class="f">variables('displayName')</span>
+Department            = <span class="f">outputs('Get_item')?['body/Department/Value']</span>
+AccountEnabled        = <span class="v">true</span>
+UserExist             = <span class="s">'Yes'</span>
+LastSync              = <span class="f">utcNow()</span>
+onPremisesSyncEnabled = <span class="v">false</span>   <span class="c">// cloud-only account</span>
+UserType              = <span class="s">'Member'</span>
+CaseType              = <span class="f">triggerBody()?['caseType']</span>
+RequestedBy           = <span class="f">triggerBody()?['requestedBy']</span></pre></div>
+  </div>
+</section>
+
+<hr>
+
+<!-- UPN ALGORITHM -->
+<section id="upn-algo">
+  <div class="sec-label">// reference</div>
+  <h2>UPN <span>Algorithm</span> ตัวอย่าง</h2>
+  <p class="sec-desc">เปรียบเทียบ algorithm เดิม vs ใหม่</p>
+
+  <div class="callout warn" style="margin-bottom:16px;">
+    <strong>ของเดิม:</strong> <code>substring(lastName, Counter-1, 2)</code> → ตัดจาก index ที่เลื่อนไป ตัวเดิมแค่ 2 ตัวเสมอ → ชนกันได้ง่าย และถ้า Counter เกิน = index out of range
+  </div>
+  <div class="callout ok" style="margin-bottom:20px;">
+    <strong>ใหม่:</strong> <code>substring(lastName, 0, Counter+1)</code> → เริ่มจากหน้าเสมอ แต่ยาวขึ้นเรื่อยๆ → ยิ่ง loop ยิ่ง unique
+  </div>
+
+  <div class="upn-demo">
+    <div style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:.1em;margin-bottom:14px;">ตัวอย่าง — lastname: sombatrak</div>
+    <div class="upn-row">
+      <div class="upn-label">newHire</div>
+      <div class="upn-iter">
+        <div class="iter-chip taken">john.so</div>
+        <div class="iter-chip taken">john.som</div>
+        <div class="iter-chip win">john.somb ✓</div>
+      </div>
+    </div>
+    <div class="upn-row">
+      <div class="upn-label">central</div>
+      <div class="upn-iter">
+        <div class="iter-chip taken">john.somb</div>
+        <div class="iter-chip win">john.somba ✓</div>
+      </div>
+    </div>
+    <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);font-family:var(--mono);font-size:9px;color:var(--muted);">
+      taken = UPN นั้นมีอยู่ใน SP Entra Log แล้ว | ✓ = ใช้ได้
+    </div>
+  </div>
+
+  <div class="callout tip">
+    <strong>Fallback:</strong> ถ้า Counter > length(lastName) ทั้งหมด → สร้าง UPN แบบ <code>fname.lname{timestamp4}@buzzebees.com</code> แล้ว terminate พร้อม alert ให้ HRIS ดูด้วยตัวเอง
+  </div>
+</section>
+
+<!-- SP COLUMNS -->
+<section id="sp-columns">
+  <div class="sec-label">// reference</div>
+  <h2>SP Entra Log <span>Columns</span></h2>
+  <p class="sec-desc">column ทั้งหมดที่ module จะ write ลง SharePoint</p>
+
+  <div class="col-grid">
+    <div class="col-card">
+      <div class="col-name">EntraEmployeeID</div>
+      <div class="col-src">← SP Employee list</div>
+    </div>
+    <div class="col-card">
+      <div class="col-name">ObjectID</div>
+      <div class="col-src">← Graph API response</div>
+    </div>
+    <div class="col-card">
+      <div class="col-name">UserPrincipalName</div>
+      <div class="col-src">← variables('mail')</div>
+    </div>
+    <div class="col-card">
+      <div class="col-name">DisplayName</div>
+      <div class="col-src">← variables('displayName')</div>
+    </div>
+    <div class="col-card">
+      <div class="col-name">Department</div>
+      <div class="col-src">← SP Employee list</div>
+    </div>
+    <div class="col-card">
+      <div class="col-name">AccountEnabled</div>
+      <div class="col-src">← hardcode: true</div>
+    </div>
+    <div class="col-card">
+      <div class="col-name">UserExist</div>
+      <div class="col-src">← hardcode: Yes</div>
+    </div>
+    <div class="col-card">
+      <div class="col-name">LastSync</div>
+      <div class="col-src">← utcNow()</div>
+    </div>
+    <div class="col-card">
+      <div class="col-name">onPremisesSyncEnabled</div>
+      <div class="col-src">← hardcode: false</div>
+    </div>
+    <div class="col-card">
+      <div class="col-name">UserType</div>
+      <div class="col-src">← hardcode: Member</div>
+    </div>
+    <div class="col-card" style="border-color:var(--cyan);">
+      <div class="col-name" style="color:var(--cyan);">CaseType</div>
+      <div class="col-src">← trigger payload (ใหม่)</div>
+    </div>
+    <div class="col-card" style="border-color:var(--cyan);">
+      <div class="col-name" style="color:var(--cyan);">RequestedBy</div>
+      <div class="col-src">← trigger payload (ใหม่)</div>
+    </div>
+  </div>
+
+  <div class="callout info">
+    column สีฟ้า = เพิ่มใหม่ใน SP list — ต้องสร้าง column เพิ่ม 2 ตัวนี้ก่อน deploy
+  </div>
+</section>
+
+<!-- WHAT CHANGES -->
+<section id="changes">
+  <div class="sec-label">// reference</div>
+  <h2>What <span>Changes</span></h2>
+  <p class="sec-desc">เปรียบเทียบ flow เดิม vs module ใหม่</p>
+
+  <table class="doc-table">
+    <thead><tr><th>ส่วน</th><th>เดิม</th><th>ใหม่</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>Trigger</td>
+        <td>SP item created (polling 1 min)</td>
+        <td>HTTP request received</td>
+        <td><span class="badge b-mod">CHANGE</span></td>
+      </tr>
+      <tr>
+        <td>Get Employee</td>
+        <td>Get Item → triggerOutputs ID</td>
+        <td>Get Item → triggerBody spItemId</td>
+        <td><span class="badge b-mod">CHANGE</span></td>
+      </tr>
+      <tr>
+        <td>DisplayName builder</td>
+        <td>Condition มี/ไม่มี Nickname</td>
+        <td>เหมือนเดิม ไม่ต้องแตะ</td>
+        <td><span class="badge b-keep">KEEP</span></td>
+      </tr>
+      <tr>
+        <td>Mail generate</td>
+        <td>substring(lastName, Counter-1, 2)</td>
+        <td>substring(lastName, 0, Counter+1/+3)</td>
+        <td><span class="badge b-mod">CHANGE</span></td>
+      </tr>
+      <tr>
+        <td>Dedup check</td>
+        <td>เช็คแค่ Graph API</td>
+        <td>เช็ค SP Entra Log ก่อน</td>
+        <td><span class="badge b-mod">CHANGE</span></td>
+      </tr>
+      <tr>
+        <td>Mail group</td>
+        <td>เพิ่มทุกกรณี</td>
+        <td>เฉพาะ caseType = newHire</td>
+        <td><span class="badge b-mod">CHANGE</span></td>
+      </tr>
+      <tr>
+        <td>Create account (Graph)</td>
+        <td>มีอยู่แล้ว</td>
+        <td>เหมือนเดิม + เพิ่ม employeeId</td>
+        <td><span class="badge b-mod">CHANGE</span></td>
+      </tr>
+      <tr>
+        <td>Write SP Entra Log</td>
+        <td>ไม่ได้ใช้</td>
+        <td>write ทุก column หลัง create</td>
+        <td><span class="badge b-new">NEW</span></td>
+      </tr>
+      <tr>
+        <td>Return result</td>
+        <td>ไม่มี</td>
+        <td>Respond to HTTP request พร้อม JSON</td>
+        <td><span class="badge b-new">NEW</span></td>
+      </tr>
+      <tr>
+        <td>Error → Ticket system</td>
+        <td>มีอยู่แล้ว</td>
+        <td>เหมือนเดิม ไม่ต้องแตะ</td>
+        <td><span class="badge b-keep">KEEP</span></td>
+      </tr>
+      <tr>
+        <td>Teams error noti</td>
+        <td>มีอยู่แล้ว</td>
+        <td>เหมือนเดิม ไม่ต้องแตะ</td>
+        <td><span class="badge b-keep">KEEP</span></td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+</main>
+</div>
+
+<script>
+// Active nav on scroll
+const sections = document.querySelectorAll('section[id]');
+const links = document.querySelectorAll('.nav-link');
+window.addEventListener('scroll', () => {
+  let cur = '';
+  sections.forEach(s => { if (window.scrollY >= s.offsetTop - 60) cur = s.id; });
+  links.forEach(l => {
+    l.classList.toggle('active', l.getAttribute('href') === '#' + cur);
+  });
+});
+</script>
+</body>
+</html>
