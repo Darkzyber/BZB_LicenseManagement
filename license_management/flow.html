@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>License Management — Buzzebees HRIS</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0e1117;
+  --surface: #161b27;
+  --surface2: #1e2534;
+  --border: #2a3347;
+  --accent: #3b82f6;
+  --accent2: #06b6d4;
+  --green: #22c55e;
+  --red: #ef4444;
+  --yellow: #f59e0b;
+  --purple: #a855f7;
+  --orange: #f97316;
+  --text: #e2e8f0;
+  --muted: #64748b;
+  --font: 'IBM Plex Sans Thai', sans-serif;
+  --mono: 'IBM Plex Mono', monospace;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--bg); color:var(--text); font-family:var(--font); min-height:100vh; }
+
+/* NAV */
+nav {
+  display:flex; align-items:center; gap:12px;
+  padding:14px 32px; border-bottom:1px solid var(--border);
+  background:var(--surface);
+}
+.logo { font-family:var(--mono); font-size:13px; color:var(--accent); letter-spacing:.05em; }
+.nav-tabs { display:flex; gap:4px; margin-left:auto; }
+.nav-tab {
+  padding:7px 18px; border-radius:6px; font-size:13px; font-weight:500;
+  cursor:pointer; border:none; background:transparent; color:var(--muted);
+  transition:.2s;
+}
+.nav-tab.active { background:var(--accent); color:#fff; }
+.nav-tab:hover:not(.active) { background:var(--surface2); color:var(--text); }
+
+/* SECTIONS */
+.section { display:none; padding:32px; }
+.section.active { display:block; }
+
+/* FLOWCHART */
+.flow-title { font-size:11px; font-family:var(--mono); color:var(--muted); letter-spacing:.15em; text-transform:uppercase; margin-bottom:24px; }
+
+.flow-grid {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:32px;
+}
+.flow-col { display:flex; flex-direction:column; gap:0; }
+.flow-col-title {
+  font-size:10px; font-family:var(--mono); color:var(--muted); letter-spacing:.12em;
+  text-transform:uppercase; margin-bottom:16px; padding-bottom:8px;
+  border-bottom:1px solid var(--border);
+}
+
+/* NODES */
+.node {
+  position:relative; display:flex; align-items:center; gap:10px;
+  padding:12px 16px; border-radius:8px; font-size:13px; font-weight:500;
+  border:1px solid var(--border); background:var(--surface2);
+  margin:0 auto; width:100%;
+}
+.node.start, .node.end {
+  background:var(--accent); border-color:var(--accent);
+  color:#fff; border-radius:20px; justify-content:center;
+  font-size:12px; font-family:var(--mono); letter-spacing:.08em;
+}
+.node.end { background:var(--green); border-color:var(--green); }
+.node.decision {
+  background:var(--surface); border-color:var(--yellow);
+  color:var(--yellow);
+}
+.node.action { border-color:var(--border); }
+.node.success { border-color:var(--green); color:var(--green); }
+.node.danger { border-color:var(--red); color:var(--red); }
+.node.info { border-color:var(--accent2); color:var(--accent2); }
+.node.purple { border-color:var(--purple); color:var(--purple); }
+.node.orange { border-color:var(--orange); color:var(--orange); }
+
+.node-num {
+  width:22px; height:22px; border-radius:50%; background:var(--border);
+  display:flex; align-items:center; justify-content:center;
+  font-size:10px; font-family:var(--mono); flex-shrink:0; color:var(--muted);
+}
+.node.decision .node-num { background:rgba(245,158,11,.15); color:var(--yellow); }
+
+/* ARROW */
+.arrow {
+  display:flex; align-items:center; flex-direction:column;
+  padding:4px 0; color:var(--muted); font-size:11px; gap:2px;
+}
+.arrow-line { width:1px; height:18px; background:var(--border); }
+.arrow svg { color:var(--muted); }
+.arrow-label { font-size:10px; font-family:var(--mono); color:var(--muted); }
+
+/* BRANCH */
+.branch { display:grid; grid-template-columns:1fr 1fr; gap:12px; width:100%; }
+.branch-col { display:flex; flex-direction:column; gap:0; }
+.branch-header {
+  font-size:10px; font-family:var(--mono); text-align:center; margin-bottom:8px;
+  padding:3px 8px; border-radius:4px;
+}
+.branch-header.yes { background:rgba(34,197,94,.1); color:var(--green); }
+.branch-header.no { background:rgba(239,68,68,.1); color:var(--red); }
+
+.branch-line {
+  display:flex; justify-content:space-around; padding:8px 0;
+  position:relative;
+}
+.branch-line::before {
+  content:''; position:absolute; top:50%; left:25%; right:25%;
+  height:1px; background:var(--border);
+}
+
+/* DIVIDER */
+.flow-divider { border:none; border-top:1px dashed var(--border); margin:20px 0; }
+
+/* EXPIRY / MOVEMENT smaller */
+.sub-flow { margin-top:16px; }
+.sub-flow-title {
+  font-size:10px; font-family:var(--mono); color:var(--muted); letter-spacing:.12em;
+  text-transform:uppercase; margin-bottom:12px;
+  display:flex; align-items:center; gap:8px;
+}
+.sub-flow-title::after { content:''; flex:1; height:1px; background:var(--border); }
+
+/* ── FORM ── */
+.form-wrap { max-width:680px; margin:0 auto; }
+.form-header { margin-bottom:32px; }
+.form-header h1 { font-size:22px; font-weight:700; margin-bottom:6px; }
+.form-header p { font-size:13px; color:var(--muted); }
+
+.form-section { margin-bottom:28px; }
+.form-section-title {
+  font-size:10px; font-family:var(--mono); color:var(--accent); letter-spacing:.15em;
+  text-transform:uppercase; margin-bottom:16px; padding-bottom:8px;
+  border-bottom:1px solid var(--border);
+}
+
+.form-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px; }
+.form-row.full { grid-template-columns:1fr; }
+
+.field label {
+  display:block; font-size:11px; font-weight:500; color:var(--muted);
+  text-transform:uppercase; letter-spacing:.08em; margin-bottom:6px;
+}
+.field label span { color:var(--red); margin-left:2px; }
+.field input, .field select, .field textarea {
+  width:100%; padding:10px 14px; background:var(--surface2);
+  border:1px solid var(--border); border-radius:8px;
+  color:var(--text); font-family:var(--font); font-size:13px;
+  transition:.2s; outline:none;
+}
+.field input:focus, .field select:focus, .field textarea:focus {
+  border-color:var(--accent); box-shadow:0 0 0 3px rgba(59,130,246,.1);
+}
+.field textarea { resize:vertical; min-height:80px; }
+.field select option { background:var(--surface2); }
+
+/* radio group */
+.radio-group { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; }
+.radio-btn { display:none; }
+.radio-label {
+  padding:8px 16px; border-radius:6px; border:1px solid var(--border);
+  font-size:12px; cursor:pointer; transition:.2s; color:var(--muted);
+  display:flex; align-items:center; gap:6px;
+}
+.radio-btn:checked + .radio-label {
+  border-color:var(--accent); color:var(--accent);
+  background:rgba(59,130,246,.08);
+}
+
+/* payment flow hint */
+.payment-hint {
+  background:var(--surface2); border:1px solid var(--border); border-radius:8px;
+  padding:12px 16px; margin-bottom:14px; font-size:12px; color:var(--muted);
+  display:none;
+}
+.payment-hint.visible { display:flex; align-items:flex-start; gap:10px; }
+.payment-hint svg { flex-shrink:0; margin-top:1px; }
+
+/* license picker */
+.license-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px; }
+.license-card {
+  border:1px solid var(--border); border-radius:8px; padding:12px 14px;
+  cursor:pointer; transition:.2s; background:var(--surface2);
+}
+.license-card:hover { border-color:var(--muted); }
+.license-card.selected { border-color:var(--accent); background:rgba(59,130,246,.06); }
+.license-card input { display:none; }
+.license-name { font-size:13px; font-weight:600; margin-bottom:2px; }
+.license-meta { font-size:11px; color:var(--muted); font-family:var(--mono); }
+.license-badge {
+  display:inline-block; font-size:9px; padding:2px 7px; border-radius:10px;
+  margin-top:6px; font-family:var(--mono);
+}
+.badge-avail { background:rgba(34,197,94,.12); color:var(--green); }
+.badge-low { background:rgba(245,158,11,.12); color:var(--yellow); }
+.badge-bundle { background:rgba(168,85,247,.12); color:var(--purple); }
+
+/* submit */
+.form-footer { display:flex; gap:12px; margin-top:28px; }
+.btn-submit {
+  padding:12px 28px; background:var(--accent); color:#fff; border:none;
+  border-radius:8px; font-family:var(--font); font-size:14px; font-weight:600;
+  cursor:pointer; transition:.2s;
+}
+.btn-submit:hover { background:#2563eb; }
+.btn-reset {
+  padding:12px 20px; background:transparent; color:var(--muted);
+  border:1px solid var(--border); border-radius:8px; font-family:var(--font);
+  font-size:14px; cursor:pointer; transition:.2s;
+}
+.btn-reset:hover { border-color:var(--muted); color:var(--text); }
+
+/* toast */
+.toast {
+  position:fixed; bottom:28px; right:28px; background:var(--green);
+  color:#fff; padding:14px 22px; border-radius:10px; font-size:13px;
+  font-weight:600; transform:translateY(80px); opacity:0;
+  transition:.3s cubic-bezier(.34,1.56,.64,1); z-index:999;
+  display:flex; align-items:center; gap:8px;
+}
+.toast.show { transform:translateY(0); opacity:1; }
+</style>
+</head>
+<body>
+
+<nav>
+  <span class="logo">bzb // HRIS</span>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="switchTab('flow')">📊 Process Flow</button>
+    <button class="nav-tab" onclick="switchTab('form')">📝 Request Form</button>
+  </div>
+</nav>
+
+<!-- ═══ FLOWCHART ═══ -->
+<div id="tab-flow" class="section active">
+  <div class="flow-title">// License Management — Process Overview</div>
+
+  <div class="flow-grid">
+
+    <!-- LEFT: Main Purchase Flow -->
+    <div class="flow-col">
+      <div class="flow-col-title">Purchase & Setup Flow</div>
+
+      <div class="node start"><span>① REQUEST</span></div>
+      <div class="arrow"><div class="arrow-line"></div><svg width="10" height="6"><path d="M5 6L0 0h10z" fill="currentColor"/></svg></div>
+
+      <div class="node decision">
+        <div class="node-num">?</div>
+        Approve / Reject
+      </div>
+
+      <div class="branch-line"></div>
+      <div class="branch">
+        <div class="branch-col">
+          <div class="branch-header yes">✓ Approve</div>
+          <div class="node success" style="font-size:12px;">
+            <div class="node-num" style="background:rgba(34,197,94,.1);color:var(--green);">A</div>
+            Create Account<br>
+            <span style="font-family:var(--mono);font-size:10px;color:var(--muted);">firstname.lastname1234</span>
+          </div>
+          <div class="arrow"><div class="arrow-line"></div><svg width="10" height="6"><path d="M5 6L0 0h10z" fill="currentColor"/></svg></div>
+          <div class="node info" style="font-size:12px;">
+            <div class="node-num" style="background:rgba(6,182,212,.1);color:var(--accent2);">②</div>
+            เลือก Payment Method
+          </div>
+        </div>
+        <div class="branch-col">
+          <div class="branch-header no">✕ Reject</div>
+          <div class="node danger" style="font-size:12px;">
+            <div class="node-num" style="background:rgba(239,68,68,.1);color:var(--red);">B</div>
+            Send Notification<br>
+            <span style="font-family:var(--mono);font-size:10px;color:var(--muted);">Email + Teams</span>
+          </div>
+          <div class="arrow"><div class="arrow-line"></div><svg width="10" height="6"><path d="M5 6L0 0h10z" fill="currentColor"/></svg></div>
+          <div class="node end">END</div>
+        </div>
+      </div>
+
+      <div class="arrow" style="margin-left:25%"><div class="arrow-line" style="height:28px"></div><svg width="10" height="6"><path d="M5 6L0 0h10z" fill="currentColor"/></svg></div>
+
+      <div class="node decision">
+        <div class="node-num">?</div>
+        Payment Type
+      </div>
+
+      <div class="branch-line"></div>
+      <div class="branch">
+        <div class="branch-col">
+          <div class="branch-header yes">💳 Corp Card</div>
+          <div class="node info" style="font-size:12px;">
+            Credit Card<br><span style="font-family:var(--mono);font-size:10px;color:var(--muted);">3.1 Corp Flow</span>
+          </div>
+        </div>
+        <div class="branch-col">
+          <div class="branch-header no">📄 PR/PO</div>
+          <div class="node purple" style="font-size:12px;">
+            Purchase Order<br><span style="font-family:var(--mono);font-size:10px;color:var(--muted);">3.2 PR Flow</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="arrow" style="margin-left:25%"><div class="arrow-line" style="height:28px"></div><svg width="10" height="6"><path d="M5 6L0 0h10z" fill="currentColor"/></svg></div>
+
+      <div class="node success">
+        <div class="node-num" style="background:rgba(34,197,94,.1);color:var(--green);">④</div>
+        Purchase Success → Create License Matrix (SharePoint)
+      </div>
+      <div class="arrow"><div class="arrow-line"></div><svg width="10" height="6"><path d="M5 6L0 0h10z" fill="currentColor"/></svg></div>
+
+      <div class="node decision">
+        <div class="node-num">?</div>
+        📦 Bundle License?
+      </div>
+
+      <div class="branch-line"></div>
+      <div class="branch">
+        <div class="branch-col">
+          <div class="branch-header yes">Yes</div>
+          <div class="node purple" style="font-size:12px;">
+            Unpack Bundle<br>
+            <span style="font-family:var(--mono);font-size:10px;color:var(--muted);">Map sub-licenses</span>
+          </div>
+          <div class="arrow"><div class="arrow-line"></div><svg width="10" height="6"><path d="M5 6L0 0h10z" fill="currentColor"/></svg></div>
+          <div class="node orange" style="font-size:12px;">
+            Assign per product<br>
+            <span style="font-family:var(--mono);font-size:10px;color:var(--muted);">add to matrix</span>
+          </div>
+        </div>
+        <div class="branch-col">
+          <div class="branch-header no">No</div>
+          <div class="node success" style="font-size:12px;">
+            Direct Assign<br>
+            <span style="font-family:var(--mono);font-size:10px;color:var(--muted);">single entry</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="arrow" style="margin-left:25%"><div class="arrow-line" style="height:24px"></div><svg width="10" height="6"><path d="M5 6L0 0h10z" fill="currentColor"/></svg></div>
+      <div class="node end">SETUP COMPLETE ✓</div>
+    </div>
+
+    <!-- RIGHT: Expiry + Movement -->
+    <div class="flow-col">
+      <div class="flow-col-title">Ongoing Operations</div>
+
+      <div class="sub-flow">
+        <div class="sub-flow-title">🔔 Expiry Notification</div>
+        <div class="node info" style="font-size:12px;">
+          <div class="node-num" style="background:rgba(6,182,212,.1);color:var(--accent2);">E1</div>
+          Scheduled Check (daily)<br>
+          <span style="font-family:var(--mono);font-size:10px;color:var(--muted);">Power Automate recurrence</span>
+        </div>
+        <div class="arrow"><div class="arrow-line"></div><svg width="10" height="6"><path d="M5 6L0 0h10z" fill="currentColor"/></svg></div>
+        <div class="node decision" style="font-size:12px;">
+          <div class="node-num">?</div>
+          Expire ≤ 30 days?
+        </div>
+        <div class="branch-line"></div>
+        <div class="branch">
+          <div class="branch-col">
+            <div class="branch-header yes">Yes</div>
+            <div class="node danger" style="font-size:12px;">
+              Notify all users<br>in Matrix
+              <span style="font-family:var(--mono);font-size:10px;color:var(--muted);display:block;">Email + Teams</span>
+            </div>
+          </div>
+          <div class="branch-col">
+            <div class="branch-header no">No</div>
+            <div class="node action" style="font-size:12px;color:var(--muted);">
+              Skip / Log
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <hr class="flow-divider">
+
+      <div class="sub-flow">
+        <div class="sub-flow-title">🔄 License Movement (HRIS Gateway RTC)</div>
+        <div class="node orange" style="font-size:12px;">
+          <div class="node-num" style="background:rgba(249,115,22,.1);color:var(--orange);">M1</div>
+          Signal from HRIS Gateway<br>
+          <span style="font-family:var(--mono);font-size:10px;color:var(--muted);">(Resign / Transfer / ฝ่ายย้าย)</span>
+        </div>
+        <div class="arrow"><div class="arrow-line"></div><svg width="10" height="6"><path d="M5 6L0 0h10z" fill="currentColor"/></svg></div>
+        <div class="node info" style="font-size:12px;">
+          <div class="node-num" style="background:rgba(6,182,212,.1);color:var(--accent2);">M2</div>
+          Notify HRIS Officer
+        </div>
+        <div class="arrow"><div class="arrow-line"></div><svg width="10" height="6"><path d="M5 6L0 0h10z" fill="currentColor"/></svg></div>
+        <div class="node action" style="font-size:12px;">
+          <div class="node-num">M3</div>
+          Send Approve to Manager<br>
+          <span style="font-family:var(--mono);font-size:10px;color:var(--muted);">Select next user for license</span>
+        </div>
+        <div class="arrow"><div class="arrow-line"></div><svg width="10" height="6"><path d="M5 6L0 0h10z" fill="currentColor"/></svg></div>
+        <div class="node decision" style="font-size:12px;">
+          <div class="node-num">?</div>
+          Manager Decision
+        </div>
+        <div class="branch-line"></div>
+        <div class="branch">
+          <div class="branch-col">
+            <div class="branch-header yes">Selected</div>
+            <div class="node success" style="font-size:12px;">
+              Send welcome<br>Email + Teams
+              <span style="font-family:var(--mono);font-size:10px;color:var(--muted);display:block;">to new user</span>
+            </div>
+            <div class="arrow"><div class="arrow-line"></div><svg width="10" height="6"><path d="M5 6L0 0h10z" fill="currentColor"/></svg></div>
+            <div class="node success" style="font-size:11px;">Update Matrix</div>
+          </div>
+          <div class="branch-col">
+            <div class="branch-header no">Not Use</div>
+            <div class="node purple" style="font-size:12px;">
+              Return to HRIS<br>
+              <span style="font-family:var(--mono);font-size:10px;color:var(--muted);">Hold / Deactivate</span>
+            </div>
+            <div class="arrow"><div class="arrow-line"></div><svg width="10" height="6"><path d="M5 6L0 0h10z" fill="currentColor"/></svg></div>
+            <div class="node action" style="font-size:11px;color:var(--muted);">Update Matrix</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══ FORM ═══ -->
+<div id="tab-form" class="section">
+<div class="form-wrap">
+  <div class="form-header">
+    <h1>Software License Request</h1>
+    <p>กรอกแบบฟอร์มสำหรับขอใช้ License ที่ Buzzebees ซื้อไว้แล้ว</p>
+  </div>
+
+  <!-- REQUESTER -->
+  <div class="form-section">
+    <div class="form-section-title">01 — Requester Info</div>
+    <div class="form-row">
+      <div class="field">
+        <label>ชื่อ-นามสกุล <span>*</span></label>
+        <input type="text" placeholder="Firstname Lastname">
+      </div>
+      <div class="field">
+        <label>Employee ID <span>*</span></label>
+        <input type="text" placeholder="BZB-XXXX">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="field">
+        <label>Department <span>*</span></label>
+        <select>
+          <option value="">— Select —</option>
+          <option>HR</option>
+          <option>Finance</option>
+          <option>IT</option>
+          <option>Marketing</option>
+          <option>Operations</option>
+          <option>Product</option>
+          <option>Privilege & Relationship Management</option>
+          <option>Mediabuzz</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Email <span>*</span></label>
+        <input type="email" placeholder="name@buzzebees.com">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="field">
+        <label>Reporting Manager <span>*</span></label>
+        <input type="text" placeholder="Manager name">
+      </div>
+      <div class="field">
+        <label>วันที่ต้องการใช้งาน <span>*</span></label>
+        <input type="date">
+      </div>
+    </div>
+  </div>
+
+  <!-- LICENSE PICKER -->
+  <div class="form-section">
+    <div class="form-section-title">02 — Select License</div>
+    <div class="license-grid">
+      <label class="license-card" onclick="selectLic(this)">
+        <input type="radio" name="license" value="power-bi-pro">
+        <div class="license-name">Power BI Pro</div>
+        <div class="license-meta">Microsoft · BI / Dashboard</div>
+        <span class="license-badge badge-avail">3 seats available</span>
+      </label>
+      <label class="license-card" onclick="selectLic(this)">
+        <input type="radio" name="license" value="adobe-cc">
+        <div class="license-name">Adobe Creative Cloud</div>
+        <div class="license-meta">Adobe · Design Suite</div>
+        <span class="license-badge badge-low">1 seat available</span>
+      </label>
+      <label class="license-card" onclick="selectLic(this)">
+        <input type="radio" name="license" value="figma">
+        <div class="license-name">Figma Professional</div>
+        <div class="license-meta">Figma · UI/UX Design</div>
+        <span class="license-badge badge-avail">5 seats available</span>
+      </label>
+      <label class="license-card" onclick="selectLic(this)">
+        <input type="radio" name="license" value="m365-e3">
+        <div class="license-name">Microsoft 365 E3</div>
+        <div class="license-meta">Microsoft · Bundle</div>
+        <span class="license-badge badge-bundle">📦 Bundle</span>
+      </label>
+      <label class="license-card" onclick="selectLic(this)">
+        <input type="radio" name="license" value="zoom">
+        <div class="license-name">Zoom Pro</div>
+        <div class="license-meta">Zoom · Meeting</div>
+        <span class="license-badge badge-avail">8 seats available</span>
+      </label>
+      <label class="license-card" onclick="selectLic(this)">
+        <input type="radio" name="license" value="other">
+        <div class="license-name">Other</div>
+        <div class="license-meta">ระบุในช่องด้านล่าง</div>
+        <span class="license-badge" style="background:rgba(100,116,139,.1);color:var(--muted);">Manual entry</span>
+      </label>
+    </div>
+    <div class="field form-row full" id="other-field" style="display:none;">
+      <label>ระบุ Software / License</label>
+      <input type="text" placeholder="ชื่อ Software และ Version">
+    </div>
+  </div>
+
+  <!-- PURPOSE -->
+  <div class="form-section">
+    <div class="form-section-title">03 — Purpose of Use</div>
+    <div class="field form-row full">
+      <label>เหตุผลที่ต้องการใช้ <span>*</span></label>
+      <textarea placeholder="อธิบายสั้นๆ ว่าจะใช้ทำอะไร เช่น สร้าง Dashboard รายงาน KPI ของทีม HR"></textarea>
+    </div>
+    <div class="form-row">
+      <div class="field">
+        <label>ระยะเวลาที่ต้องการ <span>*</span></label>
+        <select>
+          <option value="">— Select —</option>
+          <option>ถาวร (ตลอดที่ทำงาน)</option>
+          <option>1 เดือน</option>
+          <option>3 เดือน</option>
+          <option>6 เดือน</option>
+          <option>ระบุเอง</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Priority</label>
+        <select>
+          <option>Normal — ภายใน 3-5 วัน</option>
+          <option>Urgent — ภายใน 1 วัน</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- APPROVER CHAIN -->
+  <div class="form-section">
+    <div class="form-section-title">04 — Approval Routing</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">
+      Approval chain จะถูก route อัตโนมัติตาม Department ที่เลือก
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;padding:12px 16px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);font-size:13px;">
+      <div style="display:flex;align-items:center;gap:6px;color:var(--muted);">
+        <div style="width:8px;height:8px;border-radius:50%;background:var(--accent)"></div>
+        Requester
+      </div>
+      <div style="flex:1;height:1px;background:var(--border)"></div>
+      <div style="display:flex;align-items:center;gap:6px;color:var(--muted);">
+        <div style="width:8px;height:8px;border-radius:50%;background:var(--yellow)"></div>
+        Direct Manager
+      </div>
+      <div style="flex:1;height:1px;background:var(--border)"></div>
+      <div style="display:flex;align-items:center;gap:6px;color:var(--muted);">
+        <div style="width:8px;height:8px;border-radius:50%;background:var(--purple)"></div>
+        HRIS Officer
+      </div>
+      <div style="flex:1;height:1px;background:var(--border)"></div>
+      <div style="display:flex;align-items:center;gap:6px;color:var(--green);">
+        <div style="width:8px;height:8px;border-radius:50%;background:var(--green)"></div>
+        Activate
+      </div>
+    </div>
+  </div>
+
+  <!-- SUBMIT -->
+  <div class="form-footer">
+    <button class="btn-submit" onclick="submitForm()">Submit Request →</button>
+    <button class="btn-reset" onclick="resetForm()">Clear</button>
+  </div>
+</div>
+</div>
+
+<div class="toast" id="toast">
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0zm3.5 4.5-4.5 4.5-2-2L3.5 8.5 7 12 12.5 6z"/></svg>
+  Request submitted! Routing to manager...
+</div>
+
+<script>
+function switchTab(tab) {
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('tab-' + tab).classList.add('active');
+}
+
+function selectLic(card) {
+  document.querySelectorAll('.license-card').forEach(c => c.classList.remove('selected'));
+  card.classList.add('selected');
+  const isOther = card.querySelector('input').value === 'other';
+  document.getElementById('other-field').style.display = isOther ? 'block' : 'none';
+}
+
+function submitForm() {
+  const toast = document.getElementById('toast');
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 3500);
+}
+
+function resetForm() {
+  document.querySelectorAll('input:not([type=radio])').forEach(i => i.value = '');
+  document.querySelectorAll('select').forEach(s => s.selectedIndex = 0);
+  document.querySelectorAll('textarea').forEach(t => t.value = '');
+  document.querySelectorAll('.license-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById('other-field').style.display = 'none';
+}
+</script>
+</body>
+</html>
